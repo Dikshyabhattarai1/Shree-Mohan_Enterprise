@@ -6,6 +6,7 @@ import { AppContext } from "./AppContext";
 function SalesRecords() {
   const { salesRecords, setSalesRecords } = useContext(AppContext);
 
+  // Initialize with empty form
   const [form, setForm] = useState({
     product: "",
     quantity: "",
@@ -17,7 +18,7 @@ function SalesRecords() {
   const handleChange = (e) => {
     const updated = { ...form, [e.target.name]: e.target.value };
 
-    // Auto calculate total
+    // Auto-calculate total if quantity or price changes
     if (e.target.name === "quantity" || e.target.name === "price") {
       const qty = updated.quantity ? Number(updated.quantity) : 0;
       const pr = updated.price ? Number(updated.price) : 0;
@@ -40,7 +41,7 @@ function SalesRecords() {
     const updated = [...salesRecords];
     updated[index][field] = value;
 
-    // Recalculate total when price or quantity changes
+    // Recalculate total
     if (field === "quantity" || field === "price") {
       const qty = Number(updated[index].quantity);
       const pr = Number(updated[index].price);
@@ -59,6 +60,7 @@ function SalesRecords() {
     <div className="sales-container">
       <h2 className="sales-title">Sales Records</h2>
 
+      {/* Form to add new record */}
       <div className="sales-card">
         <input
           name="product"
@@ -67,7 +69,6 @@ function SalesRecords() {
           onChange={handleChange}
           className="sales-input"
         />
-
         <input
           name="quantity"
           placeholder="Quantity"
@@ -75,7 +76,6 @@ function SalesRecords() {
           onChange={handleChange}
           className="sales-input"
         />
-
         <input
           name="price"
           placeholder="Price"
@@ -83,7 +83,6 @@ function SalesRecords() {
           onChange={handleChange}
           className="sales-input"
         />
-
         <input
           name="total"
           placeholder="Total"
@@ -91,7 +90,6 @@ function SalesRecords() {
           readOnly
           className="sales-input"
         />
-
         <input
           name="date"
           type="date"
@@ -99,12 +97,12 @@ function SalesRecords() {
           onChange={handleChange}
           className="sales-input"
         />
-
         <button className="sales-btn" onClick={addRecord}>
           Add Record
         </button>
       </div>
 
+      {/* Only show table if there are records */}
       {salesRecords.length > 0 && (
         <table className="sales-table">
           <thead>
@@ -117,7 +115,6 @@ function SalesRecords() {
               <th>Action</th>
             </tr>
           </thead>
-
           <tbody>
             {salesRecords.map((record, index) => (
               <tr key={index}>
@@ -129,7 +126,6 @@ function SalesRecords() {
                     }
                   />
                 </td>
-
                 <td>
                   <input
                     value={record.quantity}
@@ -138,7 +134,6 @@ function SalesRecords() {
                     }
                   />
                 </td>
-
                 <td>
                   <input
                     value={record.price}
@@ -147,11 +142,9 @@ function SalesRecords() {
                     }
                   />
                 </td>
-
                 <td>
                   <input value={record.total} readOnly />
                 </td>
-
                 <td>
                   <input
                     type="date"
@@ -161,7 +154,6 @@ function SalesRecords() {
                     }
                   />
                 </td>
-
                 <td>
                   <button
                     onClick={() => deleteRecord(index)}

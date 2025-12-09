@@ -85,7 +85,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / "frontend_build",  # React build folder
-        ],
+        ],  
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

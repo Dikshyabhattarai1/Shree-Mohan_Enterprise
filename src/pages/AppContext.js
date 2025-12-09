@@ -12,15 +12,11 @@ export function AppProvider({ children }) {
     { id: 3, name: "Badminton Racket", stock: 50 }
   ]);
 
-  // SALES RECORDS
+  // SALES RECORDS - start empty
   const [salesRecords, setSalesRecords] = useState([]);
 
-  // ORDERS LIST
-  const [orders, setOrders] = useState([
-    { id: 101, customer: "John Doe", total: 79.98, status: "Pending" },
-    { id: 102, customer: "Jane Smith", total: 129.97, status: "Confirmed" },
-    { id: 103, customer: "Bob Johnson", total: 49.99, status: "Shipped" }
-  ]);
+  // ORDERS LIST - remove dummy orders completely
+  const [orders, setOrders] = useState([]);
 
   return (
     <AppContext.Provider
