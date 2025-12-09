@@ -5,18 +5,18 @@ import "./Bill.css";
 import Logo from "./images/logo.png.jpg";
 
 export default function Bill() {
-  // Header / company
-  const [companyName, setCompanyName] = useState("ShreeMahendra Enterprise");
-  const [companySubtitle, setCompanySubtitle] = useState("Sports Items");
-  const [companyAddress, setCompanyAddress] = useState("Biratnagar, Mahendra Chowk");
-  const [phone, setPhone] = useState("9852063234");
+  // Header / company (fixed values)
+  const companyName = "ShreeMohan Enterprise";
+  const companySubtitle = "Sports Items";
+  const companyAddress = "Biratnagar, Mahendra Chowk";
+  const phone = "9852063234";
 
   // Dates & buyer info
   const [dateEN, setDateEN] = useState("");
   const [dateNP, setDateNP] = useState("");
   const [buyerName, setBuyerName] = useState("");
 
-  // Table rows (start with 17 rows like the sample)
+  // Table rows (start with 10 rows)
   const initialRows = Array.from({ length: 10 }).map(() => ({
     particulars: "",
     qty: "",
@@ -26,7 +26,23 @@ export default function Bill() {
 
   // Add and remove rows
   const addRow = () => setRows([...rows, { particulars: "", qty: "", rate: "" }]);
-  const removeRow = (i) => setRows(rows.filter((_, idx) => idx !== i));
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  
+  const toggleRowSelection = (i) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(i)) {
+      newSelected.delete(i);
+    } else {
+      newSelected.add(i);
+    }
+    setSelectedRows(newSelected);
+  };
+  
+  const deleteSelectedRows = () => {
+    const newRows = rows.filter((_, idx) => !selectedRows.has(idx));
+    setRows(newRows);
+    setSelectedRows(new Set());
+  };
 
   // Update a row and auto-calc amount
   const updateRow = (i, field, value) => {
@@ -56,15 +72,14 @@ export default function Bill() {
           {/* Top header */}
           <div className="top-row">
             <div className="logo-col">
-              {/* FIXED: using imported Logo */}
               <img src={Logo} alt="logo" className="logo-img" />
             </div>
 
             <div className="title-col">
-              <input className="company-input company-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-              <input className="company-input company-sub" value={companySubtitle} onChange={(e) => setCompanySubtitle(e.target.value)} />
-              <input className="company-input company-addr" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} />
-              <input className="company-input company-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <div className="company-name">{companyName}</div>
+              <div className="company-sub">{companySubtitle}</div>
+              <div className="company-addr">{companyAddress}</div>
+              <div className="company-phone">{phone}</div>
             </div>
 
             <div className="date-col">
@@ -85,7 +100,7 @@ export default function Bill() {
           {/* Buyer & small boxes */}
           <div className="meta-row">
             <div className="ms-box">
-              <label className="ms-label">M/s</label>
+              <label className="ms-label">Mr./Ms.</label>
               <input className="ms-input" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} placeholder="Buyer name and address" />
             </div>
 
@@ -97,12 +112,12 @@ export default function Bill() {
             <table className="bill-table">
               <thead>
                 <tr>
+                  <th className="no-print col-check">Select</th>
                   <th className="col-sno">S.No</th>
                   <th className="col-part">Particulars</th>
                   <th className="col-qty">Qty</th>
                   <th className="col-rate">Rate</th>
                   <th className="col-amt">Amount</th>
-                  <th className="no-print col-act">Action</th>
                 </tr>
               </thead>
 
@@ -113,20 +128,24 @@ export default function Bill() {
                   const amt = q * rt;
                   return (
                     <tr key={i}>
+                      <td className="no-print td-center">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedRows.has(i)}
+                          onChange={() => toggleRowSelection(i)}
+                        />
+                      </td>
                       <td className="td-center">{i + 1}</td>
                       <td>
                         <input className="td-input part-input" value={r.particulars} onChange={(e) => updateRow(i, "particulars", e.target.value)} />
                       </td>
                       <td>
-                        <input className="td-input small" type="number" value={r.qty} onChange={(e) => updateRow(i, "qty", e.target.value)} />
+                        <input className="td-input small" type="number" min="0" value={r.qty} onChange={(e) => updateRow(i, "qty", e.target.value)} />
                       </td>
                       <td>
-                        <input className="td-input small" type="number" value={r.rate} onChange={(e) => updateRow(i, "rate", e.target.value)} />
+                        <input className="td-input small" type="number" min="0" value={r.rate} onChange={(e) => updateRow(i, "rate", e.target.value)} />
                       </td>
-                      <td className="td-center amt-cell">{amt.toFixed(2)}</td>
-                      <td className="no-print td-center">
-                        <button className="remove-btn" onClick={() => removeRow(i)}>Remove</button>
-                      </td>
+                      <td className="td-center amt-cell">{amt.toFixed(0)}</td>
                     </tr>
                   );
                 })}
@@ -137,6 +156,13 @@ export default function Bill() {
           {/* Controls */}
           <div className="controls no-print">
             <button className="add-btn" onClick={addRow}>+ Add Row</button>
+            <button 
+              className="remove-btn" 
+              onClick={deleteSelectedRows}
+              disabled={selectedRows.size === 0}
+            >
+              Delete Selected Rows ({selectedRows.size})
+            </button>
             <button className="print-btn" onClick={handlePrint}>Print / Save PDF</button>
           </div>
 
@@ -147,8 +173,7 @@ export default function Bill() {
             </div>
 
             <div className="summary-box">
-              <div className="summary-line"><span>Subtotal</span><span>Rs. {subtotal.toFixed(2)}</span></div>
-              <div className="summary-line grand"><span>Grand Total</span><span>Rs. {subtotal.toFixed(2)}</span></div>
+              <div className="summary-line grand"><span>Grand Total</span><span>Rs. {subtotal.toFixed(0)}</span></div>
             </div>
           </div>
 
