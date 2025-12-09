@@ -1,0 +1,136 @@
+/* Container */
+.sales-container {
+  max-width: 1000px;           /* << increased size to fit full row */
+  margin: 40px auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+/* Title */
+.sales-title {
+  text-align: center;
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #0074d9;
+  font-weight: bold;
+}
+
+/* CARD FORM - EVERYTHING IN ONE PERFECT LINE */
+.sales-card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 5px 18px rgba(0, 116, 217, 0.2);
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;   /* << evenly spaced */
+  align-items: center;
+  gap: 10px;
+
+  width: 100%;                      /* fits container */
+  flex-wrap: nowrap;                /* NO wrapping */
+  overflow: hidden;                 /* NO scroll */
+}
+
+/* Inputs */
+.sales-input {
+  width: 130px;                     /* << resize to fit row */
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #b3d1ff;
+  outline: none;
+  font-size: 16px;
+  color: black;
+  box-sizing: border-box;
+}
+
+.sales-input:focus {
+  border-color: #0074d9;
+  box-shadow: 0 0 8px rgba(0, 116, 217, 0.2);
+}
+
+/* Add Btn */
+.sales-btn {
+  padding: 12px 20px;
+  font-size: 16px;
+  background: #0074d9;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;              /* keeps button in one line */
+}
+
+.sales-btn:hover {
+  background: #005bb5;
+}
+
+/* TABLE */
+.sales-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: 0 5px 18px rgba(0, 116, 217, 0.15);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sales-table th,
+.sales-table td {
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.sales-table thead {
+  background: #0074d9;
+  color: white;
+}
+
+.sales-table tbody tr:nth-child(even) {
+  background: #f0f8ff;
+}
+
+.sales-table tbody tr:hover {
+  background: #d0e4ff;
+}
+
+/* Table Inputs */
+.sales-table input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #b3d1ff;
+  border-radius: 6px;
+  color: black;            /* always black text */
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+/* Highlight total */
+.sales-table td:nth-child(4) input {
+  background: #eaf4ff;
+  font-weight: bold;
+}
+
+/* Delete button */
+.delete-btn {
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #d93636;
+}
+.sales-table input {
+  width: 120px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  color: #000;           /* make text visible */
+  background: #fff;
+}

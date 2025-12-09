@@ -1,0 +1,330 @@
+/* Colors chosen to match your sample */
+:root {
+  --primary-dark: #2b2b9a;    /* darker text / accent */
+  --primary-light: #E3E8F5;   /* soft blue/purple for lines and fill */
+  --paper-white: #ffffff;
+}
+
+/* App wrapper */
+.app-wrapper {
+  background: #f6f7fb;
+  min-height: 100vh;
+  padding: 10px 12px;
+}
+
+/* Example navbar (hide on prints) */
+.navbar {
+  height: 48px;
+  background: #222;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  margin-bottom: 12px;
+}
+
+/* Bill page center */
+.bill-page {
+  display: flex;
+  justify-content: center;
+}
+
+/* The sheet */
+.bill-sheet {
+  width: 820px;
+  background: var(--paper-white);
+  border: 6px solid var(--primary-light);
+  border-radius: 6px;
+  padding: 18px;
+  color: var(--primary-dark);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  box-sizing: border-box;
+  font-family: "Arial", sans-serif;
+}
+
+/* TOP ROW: logo / title / dates */
+.top-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+/* logo */
+.logo-col { 
+  width: 95px; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+}
+.logo-img {
+  max-width: 88px;
+  max-height: 88px;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  padding: 3px;
+  background: white;
+}
+
+/* title column */
+.title-col {
+  flex: 1;
+  text-align: center;
+}
+
+.company-input {
+  display: block;
+  width: 100%;
+  border: none;
+  outline: none;
+  text-align: center;
+  color: var(--primary-dark);
+  background: transparent;
+}
+
+.company-name {
+  font-size: 0px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.company-sub {
+  font-size: 15px;
+  margin-top: 4px;
+}
+
+.company-addr, .company-phone {
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/*---------------------------------------------
+   DATE AREA: English Left — Nepali Right
+----------------------------------------------*/
+.date-area {
+  width: 260px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+    flex-shrink: 0; 
+}
+
+.date-box {
+  flex: 5;
+  text-align: left;
+}
+
+.small-label {
+  font-size: 12px;
+  color: var(--primary-dark);
+  display: block;
+  margin-top: 10px;     
+  margin-bottom: 4px;
+}
+
+.date-input {
+  width: 90%;
+  padding: 5px 4px;
+  margin-top: 20px;
+  border-radius: 9px;
+  border: 1px solid #cfcfe8;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+/* meta row under header */
+.meta-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.ms-box {
+  flex: 1;
+  border: 3px solid var(--primary-light);
+  padding: 10px;
+  border-radius: 6px;
+  min-height: 76px;
+  box-sizing: border-box;
+
+  /* Moved down a bit for better spacing */
+  margin-top: 10px;
+}
+
+.ms-label { 
+  font-weight: 75; 
+  margin-bottom:6px; 
+  display:block; 
+}
+.ms-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d0d0e6;
+  box-sizing: border-box;
+}
+
+/* table */
+.table-wrap { 
+  margin-top: 14px; 
+}
+
+.bill-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 3px solid var(--primary-light);
+}
+
+.bill-table th, .bill-table td {
+  border: 1px solid var(--primary-light);
+  padding: 8px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.bill-table thead th {
+  background: var(--paper-white);
+  font-weight: 800;
+  color: var(--primary-dark);
+  text-align: center;
+}
+
+/* column widths similar to sample */
+.col-sno { width: 6%; }
+.col-part { width: 58%; text-align:left; padding-left:10px; }
+.col-qty { width: 10%; }
+.col-rate { width: 13%; }
+.col-amt { width: 13%; }
+
+.td-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--primary-dark);
+  padding: 4px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.part-input { 
+  text-align: left; 
+  padding-left: 6px; 
+}
+
+/* center numeric fields */
+.td-center { text-align: center; }
+
+/* actions */
+.remove-btn {
+  background: #d9534f;
+  color: white;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* controls */
+.controls { 
+  display:flex; 
+  gap:10px; 
+  margin-top: 12px; 
+  align-items:center; 
+}
+.add-btn, .print-btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.add-btn { background: var(--primary-dark); color: white; }
+.print-btn { background: #198754; color: white; margin-left: auto; }
+
+/* summary and signature */
+.summary-row { 
+  display:flex; 
+  justify-content:space-between; 
+  gap:12px; 
+  margin-top: 14px; 
+  align-items:flex-start; 
+}
+.summary-box {
+  width: 300px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 6px;
+  background: white;
+}
+
+.summary-line { 
+  display:flex; 
+  justify-content:space-between; 
+  padding:6px 0; 
+  font-weight:700; 
+  color:var(--primary-dark); 
+}
+.summary-line.grand { 
+  font-size:16px; 
+  font-weight:900; 
+}
+
+.sign-row { 
+  display:flex; 
+  justify-content:space-between; 
+  margin-top: 26px; 
+  align-items:center; 
+}
+.sign-right { text-align:center; }
+.auth { font-weight:700; }
+.sig-space { 
+  margin-top:38px; 
+  border-top:1px solid #ccc; 
+  padding-top:6px; 
+  width:220px; 
+  margin-left:auto; 
+}
+
+/* PRINT RULES */
+@media print {
+
+  /* hide nav & buttons */
+  .navbar, nav, header, .topbar, .controls, .remove-btn, .add-btn, .print-btn {
+    display: none !important;
+  }
+
+  /* hide everything except bill */
+  body * { visibility: hidden; }
+  .bill-sheet, .bill-sheet * { visibility: visible; }
+
+  .bill-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+    padding: 8px;
+  }
+
+  /* ensure table prints cleanly */
+  .bill-table th, .bill-table td {
+    border: 1px solid #000 !important;
+    color: #000 !important;
+  }
+
+  .company-name, .company-sub, .company-addr, .company-phone,
+  .td-input, .part-input { 
+    color: #000 !important; 
+  }
+
+  .bill-sheet { page-break-inside: avoid; }
+}
+
+/* one-page print margins */
+@page {
+  size: auto;
+  margin: 8mm;
+}

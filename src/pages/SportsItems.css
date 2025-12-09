@@ -1,0 +1,48 @@
+.sports-container {
+  width: 90%;
+  margin: auto;
+  padding: 20px;
+}
+
+.add-item-section {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.add-item-section input {
+  padding: 8px;
+  border: 1px solid #ccc;
+}
+
+.add-item-section button {
+  padding: 8px 14px;
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.sports-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.sports-table th,
+.sports-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+.sports-table th {
+  background: #f4f4f4;
+}
+
+.delete-btn {
+  background: red;
+  color: white;
+  padding: 6px 10px;
+  border: none;
+  cursor: pointer;
+}
