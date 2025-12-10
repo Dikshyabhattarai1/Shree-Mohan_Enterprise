@@ -11,7 +11,7 @@ SECRET_KEY = 'django-insecure-+()hat!yr10-8_-dk3g8_^p*$lll3)4zv4(e5m+#qa55y&92pz
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*"]  # Use specific hosts in production
 
 
 # -------------------------------------------------
@@ -34,6 +34,14 @@ INSTALLED_APPS = [
     'api',
 ]
 
+# -------------------------------------------------
+# REST FRAMEWORK SETTINGS
+# -------------------------------------------------
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': [],
+}
 
 # -------------------------------------------------
 # MIDDLEWARE
@@ -46,12 +54,15 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
 
-    # ❗ COMMENT OUT CSRF because you are using a React frontend
+    # ❗ COMMENT OUT CSRF because using React frontend
     # 'django.middleware.csrf.CsrfViewMiddleware',
 
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # WhiteNoise for serving static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 
@@ -61,7 +72,6 @@ MIDDLEWARE = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
@@ -85,7 +95,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / "frontend_build",  # React build folder
-        ],  
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -141,11 +151,15 @@ USE_TZ = True
 # -------------------------------------------------
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / "static"
+STATIC_ROOT = BASE_DIR / "static"  # For collectstatic in production
 
+# Serve React build static files
 STATICFILES_DIRS = [
     BASE_DIR / "frontend_build" / "static",
 ]
+
+# WhiteNoise settings (optional, for production)
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # -------------------------------------------------
