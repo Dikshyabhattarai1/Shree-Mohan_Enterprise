@@ -2,17 +2,19 @@
 from rest_framework import serializers
 from .models import Product, Order, OrderItem, SaleRecord
 
+
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['id', 'name', 'price', 'stock', 'description', 'image']
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'particulars', 'quantity', 'rate', 'amount']
-        read_only_fields = ['amount']
+        fields = ['id', 'product', 'product_name', 'particulars', 'quantity', 'rate', 'amount']
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -21,32 +23,13 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'order_id', 'customer', 'customer_address', 'total', 'status', 'date', 'date_np', 'items']
-        read_only_fields = ['total']
-
-
-class OrderCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating orders with items"""
-    items = OrderItemSerializer(many=True)
-    
-    class Meta:
-        model = Order
-        fields = ['id', 'order_id', 'customer', 'customer_address', 'date', 'date_np', 'items']
-        read_only_fields = ['id']  # id is auto-generated, so make it read-only
-    
-    def create(self, validated_data):
-        items_data = validated_data.pop('items')
-        order = Order.objects.create(**validated_data)
-        
-        for item_data in items_data:
-            OrderItem.objects.create(order=order, **item_data)
-        
-        order.calculate_total()
-        return order
+        read_only_fields = ['total', 'date']
 
 
 class SaleRecordSerializer(serializers.ModelSerializer):
-    product_name = serializers.ReadOnlyField(source='product.name')
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    customer = serializers.CharField(source='order.customer', read_only=True)
     
     class Meta:
         model = SaleRecord
-        fields = ['id', 'product', 'product_name', 'order', 'quantity', 'price', 'total', 'date']
+        fields = ['id', 'product', 'product_name', 'customer', 'quantity', 'price', 'total', 'date']

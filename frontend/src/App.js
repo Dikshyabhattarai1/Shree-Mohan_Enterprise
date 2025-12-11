@@ -1,55 +1,110 @@
 // src/App.js
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import React, { useContext } from "react";
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
 
-// GLOBAL STATE
-import { AppProvider } from "./pages/AppContext";
+import LoginPage from "./pages/LoginPage";
+import Home from "./pages/Home";
 
-// PAGES
+import { AppProvider, AppContext } from "./pages/AppContext";
+
 import AdminDashboard from "./pages/AdminDashboard";
 import SalesRecords from "./pages/SalesRecords";
-import Home from "./pages/Home";
 import Bill from "./pages/Bill";
 
-// CSS
+import ProtectedRoute from "./pages/ProtectedRoute";
+
 import "./App.css";
 
 function App() {
-  const role = "admin"; // your static role system
-
   return (
     <AppProvider>
       <Router>
-        <div className="app">
-          <Navbar role={role} />
-
-          <Routes>
-            <Route path="/" element={<AdminDashboard />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/salesrecords" element={<SalesRecords />} />
-            <Route path="/bill" element={<Bill />} />
-          </Routes>
-        </div>
+        <MainApp />
       </Router>
     </AppProvider>
   );
 }
 
+function MainApp() {
+  const { isLoggedIn, setIsLoggedIn } = useContext(AppContext);
+
+  return (
+    <div className="app">
+      {/* Navbar only shows if logged in */}
+      {isLoggedIn && <Navbar />}
+
+      <Routes>
+        {/* Login page: redirect to dashboard if already logged in */}
+        <Route
+          path="/login"
+          element={
+            isLoggedIn ? (
+              <Navigate to="/admin-dashboard" replace />
+            ) : (
+              <LoginPage onLoginSuccess={() => setIsLoggedIn(true)} />
+            )
+          }
+        />
+        <Route
+          path="/"
+          element={
+            isLoggedIn ? (
+              <Navigate to="/admin-dashboard" replace />
+            ) : (
+              <LoginPage onLoginSuccess={() => setIsLoggedIn(true)} />
+            )
+          }
+        />
+
+        {/* Protected Routes */}
+        <Route
+          path="/admin-dashboard"
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/salesrecords"
+          element={
+            <ProtectedRoute>
+              <SalesRecords />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bill"
+          element={
+            <ProtectedRoute>
+              <Bill />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </div>
+  );
+}
+
 // ---------------- NAVBAR ----------------
-function Navbar({ role }) {
+function Navbar() {
   return (
     <nav className="navbar">
       <h2>ShreeMohan Enterprise</h2>
-
-      {role === "admin" && (
-        <div className="nav-links">
-          <Link to="/admin-dashboard">Dashboard</Link>
-          <Link to="/home">Products</Link>
-          <Link to="/salesrecords">Sales Records</Link>
-          <Link to="/bill">Billing</Link>
-        </div>
-      )}
+      <div className="nav-links">
+        <Link to="/admin-dashboard">Dashboard</Link>
+        <Link to="/home">Products</Link>
+        <Link to="/salesrecords">Sales Records</Link>
+        <Link to="/bill">Billing</Link>
+      </div>
     </nav>
   );
 }

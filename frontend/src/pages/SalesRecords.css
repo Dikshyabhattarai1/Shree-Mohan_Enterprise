@@ -208,17 +208,28 @@
   border-collapse: collapse;
 }
 
+/* ENHANCED TABLE HEADER STYLING */
 .sales-table thead tr {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #1e293b !important;
+  color: white !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
 .sales-table th {
-  padding: 15px;
+  padding: 18px 15px;
   text-align: left;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 1rem;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #ffffff !important;
+  background: #1e293b !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sales-table th:last-child {
+  border-right: none;
 }
 
 .sales-table td {
@@ -227,7 +238,8 @@
 }
 
 .sales-table tbody tr:hover {
-  background-color: #f9f9f9;
+  background-color: #f0f4ff;
+  transition: background-color 0.2s ease;
 }
 
 .sales-table input {

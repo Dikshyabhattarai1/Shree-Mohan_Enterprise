@@ -1,5 +1,3 @@
-// src/context/AppContext.js
-// src/pages/AppContext.js
 import { createContext, useState, useEffect } from "react";
 
 export const AppContext = createContext();
@@ -9,6 +7,9 @@ export function AppProvider({ children }) {
   const [salesRecords, setSalesRecords] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // LOGIN STATE
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Fetch products from Django API
   useEffect(() => {
@@ -55,7 +56,6 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Refresh all data
   const refreshData = () => {
     fetchProducts();
     fetchOrders();
@@ -75,7 +75,11 @@ export function AppProvider({ children }) {
         refreshData,
         fetchProducts,
         fetchOrders,
-        fetchSalesRecords
+        fetchSalesRecords,
+
+        // LOGIN STATE
+        isLoggedIn,
+        setIsLoggedIn
       }}
     >
       {children}

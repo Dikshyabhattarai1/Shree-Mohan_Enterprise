@@ -5,6 +5,8 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
+    
+
+    # React frontend fallback
     re_path(r'^(?!api/).*$', TemplateView.as_view(template_name='index.html')),
-    #path('', index),  # serve React at root
 ]

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 altair==5.5.0
 altgraph==0.17.5
 anaconda-anon-usage @ file:///C:/b/abs_e8r_zga7xy/croot/anaconda-anon-usage_1732732454901/work
@@ -124,3 +125,13 @@ wheel==0.45.1
 whitenoise==6.6.0
 win-inet-pton @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/win_inet_pton_1699472992992/work
 zstandard @ file:///C:/b/abs_31t8xmrv_h/croot/zstandard_1731356578015/work
+=======
+asgiref==3.11.0
+Django==6.0
+django-cors-headers==4.9.0
+djangorestframework==3.16.1
+djangorestframework_simplejwt==5.5.1
+PyJWT==2.10.1
+sqlparse==0.5.4
+whitenoise==6.11.0
+>>>>>>> fa68af2688e944f226ee83eb76320dfc73dcd9f1

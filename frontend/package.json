@@ -9,6 +9,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "lucide-react": "^0.555.0",
+    "nepali-date-converter": "^3.4.0",
     "nepali-datepicker-reactjs": "^1.1.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -19,7 +20,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && rm -rf ../backend/frontend_build && cp -r build ../backend/frontend_build && cd ../backend && python manage.py collectstatic --noinput",
+"build": "react-scripts build && rmdir /s /q ../backend/frontend_build 2>nul || exit 0 && xcopy build ../backend/frontend_build /E /I /Y && cd ../backend && python manage.py collectstatic --noinput",
+
+
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

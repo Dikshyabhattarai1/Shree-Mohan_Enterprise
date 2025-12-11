@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useContext } from "react";
 import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import "nepali-datepicker-reactjs/dist/index.css";
+import NepaliDate from "nepali-date-converter";
 import { AppContext } from "./AppContext";
+import "./Bill.css";
 
 export default function Bill() {
   const { products, fetchProducts } = useContext(AppContext);
@@ -11,8 +13,13 @@ export default function Bill() {
   const companyAddress = "Biratnagar, Mahendra Chowk";
   const phone = "9852063234";
 
-  const [dateEN, setDateEN] = useState(new Date().toISOString().split('T')[0]);
-  const [dateNP, setDateNP] = useState("");
+  // Auto-set today's date in both English and Nepali
+  const today = new Date();
+  const todayNepali = new NepaliDate(today);
+  const todayNepaliString = todayNepali.format("YYYY-MM-DD");
+
+  const [dateEN, setDateEN] = useState(today.toISOString().split('T')[0]);
+  const [dateNP, setDateNP] = useState(todayNepaliString);
   const [buyerName, setBuyerName] = useState("");
   const [buyerAddress, setBuyerAddress] = useState("");
 
@@ -28,7 +35,14 @@ export default function Bill() {
 
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+  }, []);
+
+  useEffect(() => {
+    console.log('Products loaded:', products);
+  }, [products]);
+
+  // ✅ Filter out products with zero stock
+  const availableProducts = products.filter(p => p.stock > 0);
 
   const addRow = () => setRows([...rows, { productId: "", particulars: "", qty: "", rate: "" }]);
   
@@ -45,19 +59,25 @@ export default function Bill() {
     setSelectedRows(new Set());
   };
 
-  const updateRow = (i, field, value) => {
+  const handleProductChange = (i, value) => {
+    console.log(`Row ${i}: Product selected = ${value}`);
     const copy = [...rows];
-    copy[i][field] = value;
+    copy[i].productId = value;
     
-    // Auto-fill from product selection
-    if (field === 'productId' && value) {
-      const product = products.find(p => p.id === parseInt(value));
+    if (value) {
+      const product = availableProducts.find(p => String(p.id) === String(value));
+      console.log(`Looking for product ${value}, found:`, product);
       if (product) {
         copy[i].particulars = product.name;
         copy[i].rate = product.price;
+        console.log(`✅ Updated row ${i}: particulars="${product.name}", rate=${product.price}`);
       }
+    } else {
+      // Clear the row if deselected
+      copy[i].particulars = "";
+      copy[i].rate = "";
+      copy[i].qty = "";
     }
-    
     setRows(copy);
   };
 
@@ -74,232 +94,296 @@ export default function Bill() {
       return;
     }
 
+    console.log('=== SAVING ORDER ===');
+    console.log('Buyer Name:', buyerName);
+    console.log('Products in context:', products);
+    console.log('Rows:', rows);
+
     const orderItems = rows
-      .filter(r => r.particulars && r.qty && r.rate)
-      .map(r => ({
-        product: parseInt(r.productId) || null,
-        particulars: r.particulars,
-        quantity: parseInt(r.qty),
-        rate: parseFloat(r.rate)
-      }));
+      .filter(r => r.productId && r.qty && r.rate)
+      .map(r => {
+        const product = products.find(p => p.id === parseInt(r.productId));
+        console.log('Looking for product ID:', r.productId, 'Found:', product);
+        
+        // ✅ Check stock availability
+        if (product && parseInt(r.qty) > product.stock) {
+          throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${r.qty}`);
+        }
+        
+        return {
+          product: parseInt(r.productId),
+          product_name: product?.name || r.particulars,
+          particulars: product?.name || r.particulars,
+          quantity: parseInt(r.qty),
+          rate: parseFloat(r.rate)
+        };
+      });
+
+    console.log('Order Items to save:', orderItems);
 
     if (orderItems.length === 0) {
-      alert("Please add at least one item");
+      alert("Please select at least one product and fill quantity & rate");
       return;
     }
 
     setSaving(true);
     try {
+      const payload = {
+        order_id: `ORD-${Date.now()}`,
+        customer: buyerName,
+        customer_address: buyerAddress,
+        date: dateEN,
+        date_np: dateNP,
+        items: orderItems
+      };
+      
+      console.log('Final payload being sent:', payload);
+
       const response = await fetch('/api/orders/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          order_id: `ORD-${Date.now()}`,
-          customer: buyerName,
-          customer_address: buyerAddress,
-          date: dateEN,
-          date_np: dateNP,
-          items: orderItems
-        })
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
         const data = await response.json();
-        alert(`Order saved and completed successfully!\nOrder ID: ${data.order_id}\nStock updated and sales records created.`);
-        
-        // Refresh product list to show updated stock
-        await fetchProducts();
-        
-        // Reset form
+        console.log('Success response:', data);
+        alert(`Order saved successfully!\nOrder ID: ${data.order_id}\n\nCustomer: ${buyerName}\nItems: ${orderItems.length}`);
+        await fetchProducts(); // ✅ Refresh products to get updated stock
         setBuyerName("");
         setBuyerAddress("");
         setRows(initialRows);
         setSelectedRows(new Set());
       } else {
         const error = await response.json();
-        alert("Error saving order: " + (error.detail || JSON.stringify(error)));
+        console.error('Server error:', error);
+        alert("Error: " + (error.detail || JSON.stringify(error)));
       }
     } catch (error) {
       console.error('Error:', error);
-      alert("Failed to save order");
+      alert("Failed to save order: " + error.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ background: 'white', padding: '30px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+    <div className="bill-page">
+      <div className="bill-sheet">
         
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #333', paddingBottom: '20px', marginBottom: '20px' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '28px' }}>{companyName}</h1>
-            <p style={{ margin: '5px 0', fontSize: '14px' }}>{companySubtitle}</p>
-            <p style={{ margin: '5px 0', fontSize: '14px' }}>{companyAddress}</p>
-            <p style={{ margin: '5px 0', fontSize: '14px' }}>Phone: {phone}</p>
+        <div className="bill-header">
+          <div className="header-left">
+            <h1 className="company-name">{companyName}</h1>
+            <p className="company-sub">{companySubtitle}</p>
+            <p className="company-addr">{companyAddress}</p>
+            <p className="company-phone">Phone: {phone}</p>
           </div>
           
-          <div style={{ textAlign: 'right' }}>
-            <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px' }}>Date (EN)</label>
-            <input 
-              type="date" 
-              value={dateEN} 
-              onChange={(e) => setDateEN(e.target.value)}
-              style={{ padding: '5px', marginBottom: '10px', display: 'block' }}
-            />
-            <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px' }}>Date (NP)</label>
-            <NepaliDatePicker
-              value={dateNP}
-              onChange={(val) => setDateNP(val)}
-              options={{ calenderLocale: "ne", valueLocale: "en" }}
-            />
+          <div className="header-right">
+            <div className="date-section">
+              <label className="date-label">Date (EN)</label>
+              <input 
+                type="date" 
+                value={dateEN} 
+                onChange={(e) => setDateEN(e.target.value)}
+                className="date-input"
+              />
+            </div>
+            <div className="date-section">
+              <label className="date-label">Date (NP)</label>
+              <NepaliDatePicker
+                value={dateNP}
+                onChange={(val) => setDateNP(val)}
+                options={{ calenderLocale: "ne", valueLocale: "en" }}
+              />
+            </div>
           </div>
         </div>
 
         {/* Buyer Info */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Mr./Ms.</label>
-          <input 
-            value={buyerName} 
-            onChange={(e) => setBuyerName(e.target.value)} 
-            placeholder="Buyer name"
-            style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ccc' }}
-          />
-          <input 
-            value={buyerAddress} 
-            onChange={(e) => setBuyerAddress(e.target.value)} 
-            placeholder="Buyer address (optional)"
-            style={{ width: '100%', padding: '8px', border: '1px solid #ccc' }}
-          />
+        <div className="buyer-section">
+          <div className="buyer-field">
+            <label className="buyer-label">Mr./Ms.</label>
+            <input 
+              value={buyerName} 
+              onChange={(e) => setBuyerName(e.target.value)} 
+              placeholder="Buyer name"
+              className="buyer-input"
+            />
+          </div>
+          <div className="buyer-field">
+            <label className="buyer-label">Address</label>
+            <input 
+              value={buyerAddress} 
+              onChange={(e) => setBuyerAddress(e.target.value)} 
+              placeholder="Buyer address (optional)"
+              className="buyer-input"
+            />
+          </div>
         </div>
 
+        {/* ✅ Stock warning message */}
+        {availableProducts.length === 0 && (
+          <div style={{
+            backgroundColor: '#fee2e2',
+            border: '1px solid #ef4444',
+            color: '#991b1b',
+            padding: '12px',
+            borderRadius: '6px',
+            marginBottom: '20px',
+            textAlign: 'center'
+          }}>
+            ⚠️ No products available in stock. Please add inventory first.
+          </div>
+        )}
+
         {/* Table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-          <thead>
-            <tr style={{ background: '#f5f5f5' }}>
-              <th className="no-print" style={{ padding: '10px', border: '1px solid #ddd' }}>Select</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>S.No</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Product</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Particulars</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Qty</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Rate</th>
-              <th style={{ padding: '10px', border: '1px solid #ddd' }}>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => {
-              const amt = (parseFloat(r.qty) || 0) * (parseFloat(r.rate) || 0);
-              return (
-                <tr key={i}>
-                  <td className="no-print" style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedRows.has(i)}
-                      onChange={() => toggleRowSelection(i)}
-                    />
-                  </td>
-                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>{i + 1}</td>
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    <select 
-                      value={r.productId}
-                      onChange={(e) => updateRow(i, "productId", e.target.value)}
-                      style={{ width: '100%', padding: '5px' }}
-                    >
-                      <option value="">Select...</option>
-                      {products.map(p => (
-                        <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    <input 
-                      value={r.particulars} 
-                      onChange={(e) => updateRow(i, "particulars", e.target.value)}
-                      style={{ width: '100%', padding: '5px', border: 'none' }}
-                    />
-                  </td>
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    <input 
-                      type="number" 
-                      min="0" 
-                      value={r.qty} 
-                      onChange={(e) => updateRow(i, "qty", e.target.value)}
-                      style={{ width: '100%', padding: '5px', border: 'none' }}
-                    />
-                  </td>
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    <input 
-                      type="number" 
-                      min="0" 
-                      value={r.rate} 
-                      onChange={(e) => updateRow(i, "rate", e.target.value)}
-                      style={{ width: '100%', padding: '5px', border: 'none' }}
-                    />
-                  </td>
-                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'right' }}>
-                    {amt.toFixed(2)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="table-wrapper">
+          <table className="bill-table">
+            <thead>
+              <tr>
+                <th className="no-print col-select">Select</th>
+                <th className="col-sno">S.No</th>
+                <th className="col-product">Product</th>
+                <th className="col-particulars">Particulars</th>
+                <th className="col-qty">Qty</th>
+                <th className="col-rate">Rate</th>
+                <th className="col-amount">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => {
+                const amt = (parseFloat(r.qty) || 0) * (parseFloat(r.rate) || 0);
+                const selectedProduct = availableProducts.find(p => String(p.id) === String(r.productId));
+                const maxQty = selectedProduct ? selectedProduct.stock : 0;
+                
+                return (
+                  <tr key={i}>
+                    <td className="no-print col-select">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedRows.has(i)}
+                        onChange={() => toggleRowSelection(i)}
+                      />
+                    </td>
+                    <td className="col-sno">{i + 1}</td>
+                    <td className="col-product">
+                      <select 
+                        value={r.productId}
+                        onChange={(e) => {
+                          console.log('Select onChange fired');
+                          handleProductChange(i, e.target.value);
+                        }}
+                        className="product-select"
+                      >
+                        <option value="">Select Product...</option>
+                        {/* ✅ Only show products with stock > 0 */}
+                        {availableProducts.map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (Stock: {p.stock})
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="col-particulars">
+                      <span>
+                        {r.particulars && r.particulars.trim() ? r.particulars : "(Select product)"}
+                      </span>
+                    </td>
+                    <td className="col-qty">
+                      <input 
+                        type="number" 
+                        min="0" 
+                        max={maxQty} // ✅ Set max to available stock
+                        value={r.qty} 
+                        onChange={(e) => {
+                          const copy = [...rows];
+                          const enteredQty = parseInt(e.target.value) || 0;
+                          
+                          // ✅ Validate against stock
+                          if (selectedProduct && enteredQty > selectedProduct.stock) {
+                            alert(`Only ${selectedProduct.stock} units available for ${selectedProduct.name}`);
+                            copy[i].qty = selectedProduct.stock;
+                          } else {
+                            copy[i].qty = e.target.value;
+                          }
+                          setRows(copy);
+                        }}
+                        className="qty-input"
+                        disabled={!r.productId} // ✅ Disable if no product selected
+                      />
+                    </td>
+                    <td className="col-rate">
+                      <input 
+                        type="number" 
+                        min="0" 
+                        step="0.01"
+                        value={r.rate} 
+                        onChange={(e) => {
+                          const copy = [...rows];
+                          copy[i].rate = e.target.value;
+                          setRows(copy);
+                        }}
+                        className="rate-input"
+                      />
+                    </td>
+                    <td className="col-amount">
+                      {amt.toFixed(2)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
         {/* Controls */}
-        <div className="no-print" style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-          <button onClick={addRow} style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', cursor: 'pointer' }}>
+        <div className="controls-section no-print">
+          <button onClick={addRow} className="btn btn-add">
             + Add Row
           </button>
           <button 
             onClick={deleteSelectedRows}
             disabled={selectedRows.size === 0}
-            style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', cursor: selectedRows.size === 0 ? 'not-allowed' : 'pointer', opacity: selectedRows.size === 0 ? 0.5 : 1 }}
+            className="btn btn-delete"
           >
             Delete Selected ({selectedRows.size})
           </button>
           <button 
             onClick={handleSaveOrder}
-            disabled={saving}
-            style={{ padding: '10px 20px', background: '#2196F3', color: 'white', border: 'none', cursor: saving ? 'not-allowed' : 'pointer' }}
+            disabled={saving || availableProducts.length === 0}
+            className="btn btn-save"
           >
             {saving ? 'Saving...' : 'Save & Complete Order'}
           </button>
-          <button onClick={handlePrint} style={{ padding: '10px 20px', background: '#FF9800', color: 'white', border: 'none', cursor: 'pointer' }}>
+          <button onClick={handlePrint} className="btn btn-print">
             Print / PDF
           </button>
         </div>
 
         {/* Summary */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #333', paddingTop: '20px' }}>
-          <div>
-            <p>Terms & Conditions: ____________________________</p>
+        <div className="summary-section">
+          <div className="summary-left">
+            <p className="terms-label">Terms & Conditions: ____________________________</p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <h3 style={{ margin: 0 }}>Grand Total: Rs. {subtotal.toFixed(2)}</h3>
+          <div className="summary-right">
+            <h3 className="grand-total">Grand Total: Rs. {subtotal.toFixed(2)}</h3>
           </div>
         </div>
 
         {/* Signature */}
-        <div style={{ marginTop: '60px', textAlign: 'right' }}>
+        <div className="signature-section">
           <p>For {companyName}</p>
-          <p style={{ marginTop: '40px', borderTop: '1px solid #333', display: 'inline-block', paddingTop: '5px' }}>
-            Authorised Signature
-          </p>
+          <p className="signature-line">Authorised Signature</p>
         </div>
 
       </div>
-      
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body { margin: 0; }
-        }
-      `}</style>
     </div>
   );
 }
-
