@@ -1,64 +1,77 @@
-// src/pages/SalesRecords.js
-import React, { useState, useContext, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "./SalesRecords.css";
-import { AppContext } from "./AppContext";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 function SalesRecords() {
-  const { salesRecords, setSalesRecords } = useContext(AppContext);
-  const [filterType, setFilterType] = useState("monthly"); // daily, weekly, monthly
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState("monthly");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Initialize with empty form
-  const [form, setForm] = useState({
-    product: "",
-    quantity: "",
-    price: "",
-    date: "",
-    customer: "",
-    total: ""
-  });
+  // Fetch orders from API
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
-  const handleChange = (e) => {
-    const updated = { ...form, [e.target.name]: e.target.value };
-
-    // Auto-calculate total if quantity or price changes
-    if (e.target.name === "quantity" || e.target.name === "price") {
-      const qty = updated.quantity ? Number(updated.quantity) : 0;
-      const pr = updated.price ? Number(updated.price) : 0;
-      updated.total = qty * pr;
-    }
-
-    setForm(updated);
-  };
-
-  const addRecord = () => {
-    if (form.product && form.quantity && form.price && form.date && form.customer) {
-      setSalesRecords([...salesRecords, form]);
-      setForm({ product: "", quantity: "", price: "", date: "", customer: "", total: "" });
-    } else {
-      alert("Please fill all fields!");
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/orders/', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Fetched orders:', data);
+        setOrders(data);
+      } else {
+        console.error('Failed to fetch orders');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateRecord = (index, field, value) => {
-    const updated = [...salesRecords];
-    updated[index][field] = value;
+  // Transform orders into flat records for display
+  const salesRecords = useMemo(() => {
+    const records = [];
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        records.push({
+          orderId: order.order_id,
+          date: order.date,
+          customer: order.customer,
+          product: item.product_name || item.particulars, // ✅ Use product_name
+          quantity: item.quantity,
+          price: item.rate,
+          total: item.quantity * item.rate
+        });
+      });
+    });
+    return records;
+  }, [orders]);
 
-    // Recalculate total
-    if (field === "quantity" || field === "price") {
-      const qty = Number(updated[index].quantity);
-      const pr = Number(updated[index].price);
-      updated[index].total = qty * pr;
+  const deleteOrder = async (orderId) => {
+    if (!window.confirm('Delete this entire order?')) return;
+    
+    try {
+      const response = await fetch(`/api/orders/${orderId}/`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        alert('Order deleted successfully');
+        fetchOrders(); // Refresh
+      } else {
+        alert('Failed to delete order');
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      alert('Error deleting order');
     }
-
-    setSalesRecords(updated);
-  };
-
-  const deleteRecord = (index) => {
-    const filtered = salesRecords.filter((_, i) => i !== index);
-    setSalesRecords(filtered);
   };
 
   // Aggregate data based on filter type
@@ -96,12 +109,12 @@ function SalesRecords() {
   // Calculate metrics
   const metrics = useMemo(() => {
     const totalSales = salesRecords.reduce((sum, record) => sum + (Number(record.total) || 0), 0);
-    const totalOrders = salesRecords.length;
+    const totalOrders = orders.length;
     const avgOrder = totalOrders > 0 ? (totalSales / totalOrders).toFixed(2) : 0;
     const totalQuantity = salesRecords.reduce((sum, record) => sum + (Number(record.quantity) || 0), 0);
 
     return { totalSales, totalOrders, avgOrder, totalQuantity };
-  }, [salesRecords]);
+  }, [salesRecords, orders]);
 
   // Paginated records (sorted by date, newest first)
   const sortedRecords = useMemo(() => {
@@ -115,66 +128,20 @@ function SalesRecords() {
 
   const totalPages = Math.ceil(salesRecords.length / itemsPerPage);
 
+  if (loading) {
+    return <div className="sales-container"><p>Loading sales records...</p></div>;
+  }
+
   return (
     <div className="sales-container">
       <h2 className="sales-title">Sales Records Dashboard</h2>
 
-      {/* Form to add new record */}
-      <div className="sales-card form-section">
-        <h3 className="form-title">Add New Sale</h3>
-        <div className="form-grid">
-          <input
-            name="product"
-            placeholder="Product"
-            value={form.product}
-            onChange={handleChange}
-            className="sales-input"
-          />
-          <input
-            name="customer"
-            placeholder="Customer"
-            value={form.customer}
-            onChange={handleChange}
-            className="sales-input"
-          />
-          <input
-            name="quantity"
-            placeholder="Quantity"
-            type="number"
-            value={form.quantity}
-            onChange={handleChange}
-            className="sales-input"
-          />
-          <input
-            name="price"
-            placeholder="Price"
-            type="number"
-            value={form.price}
-            onChange={handleChange}
-            className="sales-input"
-          />
-          <input
-            name="total"
-            placeholder="Total (Auto)"
-            value={form.total}
-            readOnly
-            className="sales-input total-input"
-          />
-          <input
-            name="date"
-            type="date"
-            value={form.date}
-            onChange={handleChange}
-            className="sales-input"
-          />
-          <button className="sales-btn" onClick={addRecord}>
-            Add Record
-          </button>
-        </div>
-      </div>
+      <button onClick={fetchOrders} className="sales-btn refresh-btn" style={{marginBottom: '20px'}}>
+        🔄 Refresh Data
+      </button>
 
       {/* Only show dashboard if there are records */}
-      {salesRecords.length > 0 && (
+      {salesRecords.length > 0 ? (
         <>
           {/* Filter Buttons */}
           <div className="filter-section">
@@ -224,7 +191,7 @@ function SalesRecords() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="period" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                  <Tooltip formatter={(value) => `Rs.${value.toFixed(2)}`} />
                   <Legend />
                   <Line 
                     type="monotone" 
@@ -245,9 +212,10 @@ function SalesRecords() {
               <table className="sales-table">
                 <thead>
                   <tr>
+                    <th>Order ID</th>
                     <th>Date</th>
-                    <th>Product</th>
                     <th>Customer</th>
+                    <th>Product</th>
                     <th>Quantity</th>
                     <th>Price</th>
                     <th>Amount</th>
@@ -255,67 +223,25 @@ function SalesRecords() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedRecords.map((record, index) => {
-                    const originalIndex = sortedRecords.indexOf(record);
-                    return (
-                      <tr key={originalIndex}>
-                        <td>
-                          <input
-                            type="date"
-                            value={record.date}
-                            onChange={(e) =>
-                              updateRecord(originalIndex, "date", e.target.value)
-                            }
-                          />
-                        </td>
-                        <td>
-                          <input
-                            value={record.product}
-                            onChange={(e) =>
-                              updateRecord(originalIndex, "product", e.target.value)
-                            }
-                          />
-                        </td>
-                        <td>
-                          <input
-                            value={record.customer}
-                            onChange={(e) =>
-                              updateRecord(originalIndex, "customer", e.target.value)
-                            }
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            value={record.quantity}
-                            onChange={(e) =>
-                              updateRecord(originalIndex, "quantity", e.target.value)
-                            }
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            value={record.price}
-                            onChange={(e) =>
-                              updateRecord(originalIndex, "price", e.target.value)
-                            }
-                          />
-                        </td>
-                        <td className="amount-cell">
-                          <input value={record.total.toFixed(2)} readOnly />
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => deleteRecord(originalIndex)}
-                            className="delete-btn"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {paginatedRecords.map((record, index) => (
+                    <tr key={index}>
+                      <td>{record.orderId}</td>
+                      <td>{new Date(record.date).toLocaleDateString()}</td>
+                      <td>{record.customer}</td>
+                      <td><strong>{record.product}</strong></td>
+                      <td>{record.quantity}</td>
+                      <td>Rs.{record.price.toFixed(2)}</td>
+                      <td><strong>Rs.{record.total.toFixed(2)}</strong></td>
+                      <td>
+                        <button
+                          onClick={() => deleteOrder(record.orderId)}
+                          className="delete-btn"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -342,11 +268,9 @@ function SalesRecords() {
             </div>
           </div>
         </>
-      )}
-
-      {salesRecords.length === 0 && (
+      ) : (
         <div className="empty-state">
-          <p>No sales records yet. Add one above to get started!</p>
+          <p>No sales records yet. Create an order in the Bill page to get started!</p>
         </div>
       )}
     </div>
