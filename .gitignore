@@ -40,3 +40,7 @@ desktop.ini
 # (if you want finer control)
 frontend_build/static/js/*.js
 frontend_build/static/css/*.css
+
+# React build output
+backend/frontend_build/
+backend/static/
