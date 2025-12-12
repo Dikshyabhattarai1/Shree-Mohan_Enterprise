@@ -20,9 +20,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-"build": "react-scripts build && rmdir /s /q ../backend/frontend_build 2>nul || exit 0 && xcopy build ../backend/frontend_build /E /I /Y && cd ../backend && python manage.py collectstatic --noinput",
-
-
+    "build": "react-scripts build ",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

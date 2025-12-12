@@ -1,25 +1,4 @@
 # =========================
-db.sqlite3
-
-
-backend/__pycache__/
-frontend/__pycache__/
-*.pyc
-.env
-
-*.pyc
-__pycache__/
-
-# Node / React
-# =========================
-node_modules/
-build/
-npm-debug.log*
-yarn-error.log*
-yarn-debug.log*
-frontend_build/           # if backend serves React build
-
-# =========================
 # Python / Django
 # =========================
 __pycache__/
@@ -30,11 +9,36 @@ env/
 venv/
 db.sqlite3
 *.sqlite3
+*.env
+
+# Django migration files (optional)
+*/migrations/*.pyc
+*/migrations/*.py[cod]
+*/migrations/__pycache__/
+
+# =========================
+# Node / React
+# =========================
+node_modules/
+build/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+frontend_build/           # if backend serves React build
+backend/frontend_build/
+backend/static/
+
+# Optional: ignore React build files individually
+frontend_build/static/js/*.js
+frontend_build/static/css/*.css
 
 # =========================
 # IDE / Editor
 # =========================
 .vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
 
 # =========================
 # OS / Misc
@@ -44,11 +48,7 @@ Thumbs.db
 desktop.ini
 
 # =========================
-# Optional: React build files to ignore individually
-# (if you want finer control)
-frontend_build/static/js/*.js
-frontend_build/static/css/*.css
-
-# React build output
-backend/frontend_build/
-backend/static/
+# Python bytecode cache
+# =========================
+*.pyc
+*/__pycache__/

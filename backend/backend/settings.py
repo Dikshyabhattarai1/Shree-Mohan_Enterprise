@@ -15,13 +15,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------
 SECRET_KEY = 'django-insecure-+()hat!yr10-8_-dk3g8_^p*$lll3)4zv4(e5m+#qa55y&92pz'
 DEBUG = True
-ALLOWED_HOSTS = ["*"]  # Change in production
+ALLOWED_HOSTS = ["*"]
 
 # --------------------------
 # INSTALLED APPS
 # --------------------------
 INSTALLED_APPS = [
-    # Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -34,7 +33,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
 
-    # Your apps
+    # Your app
     'api',
 ]
 
@@ -42,52 +41,46 @@ INSTALLED_APPS = [
 # MIDDLEWARE
 # --------------------------
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # must be at top
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',  # disabled for React
+    # 'django.middleware.csrf.CsrfViewMiddleware',
+
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # for static files
+
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 # --------------------------
-# CORS SETTINGS
+# CORS
 # --------------------------
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = [
-    "accept",
-    "accept-encoding",
-    "authorization",
-    "content-type",
-    "origin",
-    "user-agent",
-    "x-csrftoken",
-    "x-requested-with",
-]
 
 # --------------------------
 # REST FRAMEWORK
 # --------------------------
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': [],
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    )
 }
 
 # --------------------------
-# URLS / TEMPLATES
+# TEMPLATES (React build files)
 # --------------------------
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "frontend_build"],  # React build directory
+        'DIRS': [
+    BASE_DIR.parent / "frontend" / "build"
+               ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -113,7 +106,7 @@ DATABASES = {
 }
 
 # --------------------------
-# PASSWORD VALIDATORS
+# PASSWORD VALIDATION
 # --------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -131,17 +124,25 @@ USE_I18N = True
 USE_TZ = True
 
 # --------------------------
-# STATIC FILES
+# STATIC FILES (React + Django)
 # --------------------------
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / "static"  # collectstatic goes here
 
 STATICFILES_DIRS = [
-    BASE_DIR / "frontend_build" / "static",  # React static files
+    BASE_DIR.parent / "frontend" / "build" / "static",
 ]
 
-# WhiteNoise for production
+
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# --------------------------
+# MEDIA FILES
+# --------------------------
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / "media"
 
 # --------------------------
 # DEFAULT AUTO FIELD
@@ -149,26 +150,10 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --------------------------
-# SIMPLE JWT SETTINGS
+# JWT SETTINGS
 # --------------------------
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': False,
-    'UPDATE_LAST_LOGIN': True,
-
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
 }
