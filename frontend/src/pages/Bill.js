@@ -3,17 +3,17 @@ import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import "nepali-datepicker-reactjs/dist/index.css";
 import NepaliDate from "nepali-date-converter";
 import { AppContext } from "./AppContext";
+import logo from "./images/logo.jpg";
 import "./Bill.css";
 
 export default function Bill() {
-  const { products, fetchProducts } = useContext(AppContext);
-  
+  const { products, fetchProducts, fetchWithAuth } = useContext(AppContext);
+
   const companyName = "ShreeMohan Enterprise";
   const companySubtitle = "Sports Items";
   const companyAddress = "Biratnagar, Mahendra Chowk";
   const phone = "9852063234";
 
-  // Auto-set today's date in both English and Nepali
   const today = new Date();
   const todayNepali = new NepaliDate(today);
   const todayNepaliString = todayNepali.format("YYYY-MM-DD");
@@ -29,51 +29,38 @@ export default function Bill() {
     qty: "",
     rate: "",
   }));
+
   const [rows, setRows] = useState(initialRows);
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchProducts();
+    // eslint-disable-next-line
   }, []);
 
-  useEffect(() => {
-    console.log('Products loaded:', products);
-  }, [products]);
-
-  // ✅ Filter out products with zero stock
   const availableProducts = products.filter(p => p.stock > 0);
 
-  const addRow = () => setRows([...rows, { productId: "", particulars: "", qty: "", rate: "" }]);
-  
-  const toggleRowSelection = (i) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(i)) newSelected.delete(i);
-    else newSelected.add(i);
-    setSelectedRows(newSelected);
-  };
-  
+  const addRow = () =>
+    setRows([...rows, { productId: "", particulars: "", qty: "", rate: "" }]);
+
   const deleteSelectedRows = () => {
-    const newRows = rows.filter((_, idx) => !selectedRows.has(idx));
-    setRows(newRows);
+    setRows(rows.filter((_, idx) => !selectedRows.has(idx)));
     setSelectedRows(new Set());
   };
 
-  const handleProductChange = (i, value) => {
-    console.log(`Row ${i}: Product selected = ${value}`);
+  // FIXED: Handle product selection
+  const handleProductChange = (i, productId) => {
     const copy = [...rows];
-    copy[i].productId = value;
-    
-    if (value) {
-      const product = availableProducts.find(p => String(p.id) === String(value));
-      console.log(`Looking for product ${value}, found:`, product);
+    copy[i].productId = productId;
+
+    if (productId) {
+      const product = availableProducts.find(p => p.id === parseInt(productId));
       if (product) {
         copy[i].particulars = product.name;
         copy[i].rate = product.price;
-        console.log(`✅ Updated row ${i}: particulars="${product.name}", rate=${product.price}`);
       }
     } else {
-      // Clear the row if deselected
       copy[i].particulars = "";
       copy[i].rate = "";
       copy[i].qty = "";
@@ -81,11 +68,21 @@ export default function Bill() {
     setRows(copy);
   };
 
-  const amounts = rows.map((r) => {
-    const q = parseFloat(r.qty) || 0;
-    const rt = parseFloat(r.rate) || 0;
-    return q * rt;
-  });
+  // Handle quantity change
+  const handleQtyChange = (i, value) => {
+    const copy = [...rows];
+    copy[i].qty = value;
+    setRows(copy);
+  };
+
+  // Handle rate change
+  const handleRateChange = (i, value) => {
+    const copy = [...rows];
+    copy[i].rate = value;
+    setRows(copy);
+  };
+
+  const amounts = rows.map((r) => (parseFloat(r.qty) || 0) * (parseFloat(r.rate) || 0));
   const subtotal = amounts.reduce((s, a) => s + a, 0);
 
   const handleSaveOrder = async () => {
@@ -94,40 +91,29 @@ export default function Bill() {
       return;
     }
 
-    console.log('=== SAVING ORDER ===');
-    console.log('Buyer Name:', buyerName);
-    console.log('Products in context:', products);
-    console.log('Rows:', rows);
-
-    const orderItems = rows
-      .filter(r => r.productId && r.qty && r.rate)
-      .map(r => {
-        const product = products.find(p => p.id === parseInt(r.productId));
-        console.log('Looking for product ID:', r.productId, 'Found:', product);
-        
-        // ✅ Check stock availability
-        if (product && parseInt(r.qty) > product.stock) {
-          throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${r.qty}`);
-        }
-        
-        return {
-          product: parseInt(r.productId),
-          product_name: product?.name || r.particulars,
-          particulars: product?.name || r.particulars,
-          quantity: parseInt(r.qty),
-          rate: parseFloat(r.rate)
-        };
-      });
-
-    console.log('Order Items to save:', orderItems);
-
-    if (orderItems.length === 0) {
-      alert("Please select at least one product and fill quantity & rate");
-      return;
-    }
-
-    setSaving(true);
     try {
+      const orderItems = rows
+        .filter(r => r.productId && r.qty && r.rate)
+        .map(r => {
+          const product = products.find(p => p.id === parseInt(r.productId));
+          if (product && parseInt(r.qty) > product.stock) {
+            throw new Error(`Insufficient stock for ${product.name}.`);
+          }
+          return {
+            product: parseInt(r.productId),
+            particulars: product?.name || r.particulars,
+            quantity: parseInt(r.qty),
+            rate: parseFloat(r.rate)
+          };
+        });
+
+      if (orderItems.length === 0) {
+        alert("Please select at least one product and fill quantity & rate");
+        return;
+      }
+
+      setSaving(true);
+
       const payload = {
         order_id: `ORD-${Date.now()}`,
         customer: buyerName,
@@ -136,65 +122,61 @@ export default function Bill() {
         date_np: dateNP,
         items: orderItems
       };
-      
-      console.log('Final payload being sent:', payload);
 
-      const response = await fetch('/api/orders/', {
+      const response = await fetchWithAuth('/api/orders/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(payload)
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Success response:', data);
-        alert(`Order saved successfully!\nOrder ID: ${data.order_id}\n\nCustomer: ${buyerName}\nItems: ${orderItems.length}`);
-        await fetchProducts(); // ✅ Refresh products to get updated stock
+        alert(`Order saved successfully!\nOrder ID: ${data.order_id}`);
+        await fetchProducts();
         setBuyerName("");
         setBuyerAddress("");
         setRows(initialRows);
         setSelectedRows(new Set());
       } else {
         const error = await response.json();
-        console.error('Server error:', error);
         alert("Error: " + (error.detail || JSON.stringify(error)));
       }
     } catch (error) {
-      console.error('Error:', error);
       alert("Failed to save order: " + error.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   return (
     <div className="bill-page">
       <div className="bill-sheet">
-        
-        {/* Header */}
+
+        {/* ---- MAIN HEADER WITH LOGO ---- */}
         <div className="bill-header">
           <div className="header-left">
-            <h1 className="company-name">{companyName}</h1>
-            <p className="company-sub">{companySubtitle}</p>
-            <p className="company-addr">{companyAddress}</p>
-            <p className="company-phone">Phone: {phone}</p>
+            <img src={logo} alt="Company Logo" className="company-logo" />
+
+            <div>
+              <h1 className="company-name">{companyName}</h1>
+              <p className="company-sub">{companySubtitle}</p>
+              <p className="company-addr">{companyAddress}</p>
+              <p className="company-phone">Phone: {phone}</p>
+            </div>
           </div>
-          
+
           <div className="header-right">
             <div className="date-section">
               <label className="date-label">Date (EN)</label>
-              <input 
-                type="date" 
-                value={dateEN} 
+              <input
+                type="date"
+                value={dateEN}
                 onChange={(e) => setDateEN(e.target.value)}
                 className="date-input"
               />
             </div>
+
             <div className="date-section">
               <label className="date-label">Date (NP)</label>
               <NepaliDatePicker
@@ -206,136 +188,113 @@ export default function Bill() {
           </div>
         </div>
 
-        {/* Buyer Info */}
+        {/* ---- BUYER INFO ---- */}
         <div className="buyer-section">
           <div className="buyer-field">
             <label className="buyer-label">Mr./Ms.</label>
-            <input 
-              value={buyerName} 
-              onChange={(e) => setBuyerName(e.target.value)} 
+            <input
+              value={buyerName}
+              onChange={(e) => setBuyerName(e.target.value)}
               placeholder="Buyer name"
               className="buyer-input"
             />
           </div>
+
           <div className="buyer-field">
             <label className="buyer-label">Address</label>
-            <input 
-              value={buyerAddress} 
-              onChange={(e) => setBuyerAddress(e.target.value)} 
-              placeholder="Buyer address (optional)"
+            <input
+              value={buyerAddress}
+              onChange={(e) => setBuyerAddress(e.target.value)}
+              placeholder="Buyer address"
               className="buyer-input"
             />
           </div>
         </div>
 
-        {/* ✅ Stock warning message */}
+        {/* ---- STOCK WARNING ---- */}
         {availableProducts.length === 0 && (
-          <div style={{
-            backgroundColor: '#fee2e2',
-            border: '1px solid #ef4444',
-            color: '#991b1b',
-            padding: '12px',
-            borderRadius: '6px',
-            marginBottom: '20px',
-            textAlign: 'center'
-          }}>
+          <div className="stock-warning">
             ⚠️ No products available in stock. Please add inventory first.
           </div>
         )}
 
-        {/* Table */}
+        {/* ---- BILL TABLE ---- */}
         <div className="table-wrapper">
           <table className="bill-table">
             <thead>
               <tr>
-                <th className="no-print col-select">Select</th>
                 <th className="col-sno">S.No</th>
-                <th className="col-product">Product</th>
                 <th className="col-particulars">Particulars</th>
                 <th className="col-qty">Qty</th>
                 <th className="col-rate">Rate</th>
                 <th className="col-amount">Amount</th>
               </tr>
             </thead>
+
             <tbody>
               {rows.map((r, i) => {
                 const amt = (parseFloat(r.qty) || 0) * (parseFloat(r.rate) || 0);
-                const selectedProduct = availableProducts.find(p => String(p.id) === String(r.productId));
-                const maxQty = selectedProduct ? selectedProduct.stock : 0;
-                
                 return (
                   <tr key={i}>
-                    <td className="no-print col-select">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedRows.has(i)}
-                        onChange={() => toggleRowSelection(i)}
-                      />
-                    </td>
                     <td className="col-sno">{i + 1}</td>
-                    <td className="col-product">
-                      <select 
+                    <td className="col-particulars no-print">
+                      <select
                         value={r.productId}
-                        onChange={(e) => {
-                          console.log('Select onChange fired');
-                          handleProductChange(i, e.target.value);
-                        }}
+                        onChange={(e) => handleProductChange(i, e.target.value)}
                         className="product-select"
+                        style={{
+                          width: "100%",
+                          padding: "6px",
+                          borderRadius: "4px",
+                          border: "1px solid #ddd",
+                          fontSize: "14px"
+                        }}
                       >
-                        <option value="">Select Product...</option>
-                        {/* ✅ Only show products with stock > 0 */}
-                        {availableProducts.map(p => (
+                        <option value="">-- Select Product --</option>
+                        {availableProducts.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name} (Stock: {p.stock})
                           </option>
                         ))}
                       </select>
-                    </td>
-                    <td className="col-particulars">
-                      <span>
-                        {r.particulars && r.particulars.trim() ? r.particulars : "(Select product)"}
-                      </span>
+                      <div className="selected-product" style={{ marginTop: "4px", fontWeight: "500" }}>
+                        {r.particulars || "(None selected)"}
+                      </div>
                     </td>
                     <td className="col-qty">
-                      <input 
-                        type="number" 
-                        min="0" 
-                        max={maxQty} // ✅ Set max to available stock
-                        value={r.qty} 
-                        onChange={(e) => {
-                          const copy = [...rows];
-                          const enteredQty = parseInt(e.target.value) || 0;
-                          
-                          // ✅ Validate against stock
-                          if (selectedProduct && enteredQty > selectedProduct.stock) {
-                            alert(`Only ${selectedProduct.stock} units available for ${selectedProduct.name}`);
-                            copy[i].qty = selectedProduct.stock;
-                          } else {
-                            copy[i].qty = e.target.value;
-                          }
-                          setRows(copy);
+                      <input
+                        type="number"
+                        value={r.qty}
+                        onChange={(e) => handleQtyChange(i, e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        style={{
+                          width: "100%",
+                          padding: "6px",
+                          borderRadius: "4px",
+                          border: "1px solid #ddd",
+                          fontSize: "14px"
                         }}
-                        className="qty-input"
-                        disabled={!r.productId} // ✅ Disable if no product selected
                       />
                     </td>
                     <td className="col-rate">
-                      <input 
-                        type="number" 
-                        min="0" 
+                      <input
+                        type="number"
+                        value={r.rate}
+                        onChange={(e) => handleRateChange(i, e.target.value)}
+                        placeholder="0"
+                        min="0"
                         step="0.01"
-                        value={r.rate} 
-                        onChange={(e) => {
-                          const copy = [...rows];
-                          copy[i].rate = e.target.value;
-                          setRows(copy);
+                        style={{
+                          width: "100%",
+                          padding: "6px",
+                          borderRadius: "4px",
+                          border: "1px solid #ddd",
+                          fontSize: "14px"
                         }}
-                        className="rate-input"
                       />
                     </td>
-                    <td className="col-amount">
-                      {amt.toFixed(2)}
-                    </td>
+                    <td className="col-amount">{amt.toFixed(2)}</td>
                   </tr>
                 );
               })}
@@ -343,41 +302,44 @@ export default function Bill() {
           </table>
         </div>
 
-        {/* Controls */}
+        {/* ---- ACTION BUTTONS ---- */}
         <div className="controls-section no-print">
-          <button onClick={addRow} className="btn btn-add">
-            + Add Row
-          </button>
-          <button 
+          <button onClick={addRow} className="btn btn-add">+ Add Row</button>
+          <button
             onClick={deleteSelectedRows}
             disabled={selectedRows.size === 0}
             className="btn btn-delete"
           >
-            Delete Selected ({selectedRows.size})
+            Delete Selected
           </button>
-          <button 
+
+          <button
             onClick={handleSaveOrder}
             disabled={saving || availableProducts.length === 0}
             className="btn btn-save"
           >
-            {saving ? 'Saving...' : 'Save & Complete Order'}
+            {saving ? "Saving..." : "Save & Complete Order"}
           </button>
+
           <button onClick={handlePrint} className="btn btn-print">
             Print / PDF
           </button>
         </div>
 
-        {/* Summary */}
+        {/* ---- SUMMARY ---- */}
         <div className="summary-section">
           <div className="summary-left">
-            <p className="terms-label">Terms & Conditions: ____________________________</p>
+            <p className="terms-label">
+              Terms & Conditions: ____________________________
+            </p>
           </div>
+
           <div className="summary-right">
             <h3 className="grand-total">Grand Total: Rs. {subtotal.toFixed(2)}</h3>
           </div>
         </div>
 
-        {/* Signature */}
+        {/* ---- SIGNATURE ---- */}
         <div className="signature-section">
           <p>For {companyName}</p>
           <p className="signature-line">Authorised Signature</p>

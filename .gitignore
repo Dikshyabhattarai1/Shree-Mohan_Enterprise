@@ -1,6 +1,12 @@
 # =========================
 db.sqlite3
 
+
+backend/__pycache__/
+frontend/__pycache__/
+*.pyc
+.env
+
 *.pyc
 __pycache__/
 

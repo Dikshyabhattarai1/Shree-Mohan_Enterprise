@@ -1,20 +1,25 @@
-// src/pages/LoginPage.js
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from './AppContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { setIsLoggedIn } = useContext(AppContext);
+  const { login } = useContext(AppContext);
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [debugLog, setDebugLog] = useState([]);
 
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   });
+
+  const addLog = (msg) => {
+    console.log(msg);
+    setDebugLog(prev => [...prev, msg]);
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -24,16 +29,46 @@ export default function LoginPage() {
     setError('');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    addLog('🔵 [1] Login button clicked');
+    addLog(`🔵 [2] Username: ${formData.username}, Password: ${formData.password ? '****' : 'empty'}`);
+    
     setLoading(true);
     setError('');
 
-    // Hard-coded admin login
-    if (formData.username === 'admin' && formData.password === 'admin123') {
-      setIsLoggedIn(true);
-      navigate('/admin-dashboard', { replace: true }); // replace history to prevent back
-    } else {
-      setError('Invalid username or password');
+    if (!formData.username || !formData.password) {
+      addLog('❌ [3] Username or password is empty');
+      setError('Please enter both username and password');
+      setLoading(false);
+      return;
+    }
+
+    addLog('🔵 [4] Calling login function from context...');
+    
+    try {
+      const result = await login(formData.username, formData.password);
+      addLog(`🔵 [5] Login function returned: ${JSON.stringify(result)}`);
+
+      if (result.success) {
+        addLog('✅ [6] Login successful!');
+        
+        // Check localStorage
+        const token = localStorage.getItem('access_token');
+        addLog(`✅ [7] Token in localStorage: ${token ? 'YES ✅' : 'NO ❌'}`);
+        
+        if (token) {
+          addLog('✅ [8] Navigating to dashboard...');
+          navigate('/admin-dashboard', { replace: true });
+        } else {
+          addLog('❌ [8] Token not in localStorage, not navigating');
+        }
+      } else {
+        addLog(`❌ [6] Login failed: ${result.error}`);
+        setError(result.error);
+      }
+    } catch (err) {
+      addLog(`❌ [5] Exception caught: ${err.message}`);
+      setError(err.message);
     }
 
     setLoading(false);
@@ -49,17 +84,8 @@ export default function LoginPage() {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <div style={styles.logo}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 0 1-8 0"/>
-            </svg>
-          </div>
           <h1 style={styles.title}>Shree Mohan Enterprise</h1>
-          <p style={styles.subtitle}>
-            Welcome back! Please login to your account
-          </p>
+          <p style={styles.subtitle}>Login to your account</p>
         </div>
 
         <div style={styles.formCard}>
@@ -76,6 +102,7 @@ export default function LoginPage() {
                 onKeyPress={handleKeyPress}
                 style={styles.input}
                 placeholder="Enter your username"
+                disabled={loading}
               />
             </div>
 
@@ -90,11 +117,13 @@ export default function LoginPage() {
                   onKeyPress={handleKeyPress}
                   style={styles.input}
                   placeholder="Enter your password"
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   style={styles.eyeButton}
+                  disabled={loading}
                 >
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
@@ -106,16 +135,22 @@ export default function LoginPage() {
               disabled={loading}
               style={{ ...styles.submitButton, ...(loading ? styles.disabledButton : {}) }}
             >
-              {loading ? 'Please wait...' : 'Login'}
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </div>
-
-          <div style={styles.footer}>
-            <p style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center' }}>
-              By continuing, you agree to our Terms of Service and Privacy Policy
-            </p>
-          </div>
         </div>
+
+        {/* DEBUG LOG */}
+        {debugLog.length > 0 && (
+          <div style={styles.debugBox}>
+            <h3>🔍 Debug Log:</h3>
+            {debugLog.map((log, i) => (
+              <div key={i} style={{ fontSize: '12px', fontFamily: 'monospace', marginBottom: '4px' }}>
+                {log}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -124,7 +159,7 @@ export default function LoginPage() {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: '#ffffff', // White background
+    background: '#f5f5f5',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -132,39 +167,28 @@ const styles = {
   },
   card: {
     width: '100%',
-    maxWidth: '480px',
+    maxWidth: '500px',
   },
   header: {
     textAlign: 'center',
     marginBottom: '32px',
   },
-  logo: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '64px',
-    height: '64px',
-    background: '#ffffff',
-    borderRadius: '16px',
-    marginBottom: '16px',
-    color: '#667eea',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-  },
   title: {
     fontSize: '28px',
     fontWeight: 'bold',
-    color: '#000000', // Black text
+    color: '#000000',
     margin: '0 0 8px 0',
   },
   subtitle: {
-    color: '#000000', // Black text
+    color: '#666',
     margin: 0,
   },
   formCard: {
-    background: '#ffffff', // White form background
+    background: '#ffffff',
     borderRadius: '16px',
     padding: '32px',
-    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    marginBottom: '20px',
   },
   errorBox: {
     padding: '12px',
@@ -183,7 +207,6 @@ const styles = {
   inputGroup: {
     display: 'flex',
     flexDirection: 'column',
-    flex: 1,
   },
   label: {
     fontSize: '14px',
@@ -212,26 +235,28 @@ const styles = {
     border: 'none',
     cursor: 'pointer',
     fontSize: '18px',
-    padding: '4px',
   },
   submitButton: {
-    width: '100%',
     padding: '12px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#667eea',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'transform 0.2s',
     marginTop: '8px',
   },
   disabledButton: {
     opacity: 0.6,
     cursor: 'not-allowed',
   },
-  footer: {
-    marginTop: '24px',
+  debugBox: {
+    background: '#f0f0f0',
+    padding: '12px',
+    borderRadius: '8px',
+    border: '1px solid #ddd',
+    maxHeight: '300px',
+    overflowY: 'auto',
   },
 };
