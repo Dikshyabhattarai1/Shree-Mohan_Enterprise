@@ -3,11 +3,14 @@ import { NepaliDatePicker } from "nepali-datepicker-reactjs";
 import "nepali-datepicker-reactjs/dist/index.css";
 import NepaliDate from "nepali-date-converter";
 import { AppContext } from "./AppContext";
+
 import "./Bill.css";
-import logo from "./images/logo.png.jpg"; // exact filename
+import logo from "./images/logo.jpg";
+// adjust path & extension correctly
+ // exact filename
 
 export default function Bill() {
-  const { products, fetchProducts } = useContext(AppContext);
+  const { products, fetchProducts, fetchWithAuth } = useContext(AppContext);
 
   const companyName = "ShreeMohan Enterprise";
   const companySubtitle = "Sports Items";
@@ -18,7 +21,7 @@ export default function Bill() {
   const todayNepali = new NepaliDate(today);
   const todayNepaliString = todayNepali.format("YYYY-MM-DD");
 
-  const [dateEN, setDateEN] = useState(today.toISOString().split('T')[0]);
+  const [dateEN, setDateEN] = useState(today.toISOString().split("T")[0]);
   const [dateNP, setDateNP] = useState(todayNepaliString);
   const [buyerName, setBuyerName] = useState("");
   const [buyerAddress, setBuyerAddress] = useState("");
@@ -29,17 +32,20 @@ export default function Bill() {
     qty: "",
     rate: "",
   }));
+
   const [rows, setRows] = useState(initialRows);
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchProducts();
+    // eslint-disable-next-line
   }, []);
 
-  const availableProducts = products.filter(p => p.stock > 0);
+  const availableProducts = products.filter((p) => p.stock > 0);
 
-  const addRow = () => setRows([...rows, { productId: "", particulars: "", qty: "", rate: "" }]);
+  const addRow = () =>
+    setRows([...rows, { productId: "", particulars: "", qty: "", rate: "" }]);
 
   const toggleRowSelection = (i) => {
     const newSelected = new Set(selectedRows);
@@ -49,17 +55,16 @@ export default function Bill() {
   };
 
   const deleteSelectedRows = () => {
-    const newRows = rows.filter((_, idx) => !selectedRows.has(idx));
-    setRows(newRows);
+    setRows(rows.filter((_, idx) => !selectedRows.has(idx)));
     setSelectedRows(new Set());
   };
 
-  const handleProductChange = (i, value) => {
+  const handleProductChange = (i, productId) => {
     const copy = [...rows];
-    copy[i].productId = value;
+    copy[i].productId = productId;
 
-    if (value) {
-      const product = availableProducts.find(p => String(p.id) === String(value));
+    if (productId) {
+      const product = availableProducts.find((p) => p.id === parseInt(productId));
       if (product) {
         copy[i].particulars = product.name;
         copy[i].rate = product.price;
@@ -72,11 +77,26 @@ export default function Bill() {
     setRows(copy);
   };
 
-  const amounts = rows.map((r) => {
-    const q = parseFloat(r.qty) || 0;
-    const rt = parseFloat(r.rate) || 0;
-    return q * rt;
-  });
+  const handleQtyChange = (i, value) => {
+    const copy = [...rows];
+    const product = availableProducts.find((p) => p.id === parseInt(copy[i].productId));
+    const qtyValue = parseInt(value) || 0;
+    if (product && qtyValue > product.stock) {
+      alert(`Only ${product.stock} units available for ${product.name}`);
+      copy[i].qty = product.stock;
+    } else {
+      copy[i].qty = value;
+    }
+    setRows(copy);
+  };
+
+  const handleRateChange = (i, value) => {
+    const copy = [...rows];
+    copy[i].rate = value;
+    setRows(copy);
+  };
+
+  const amounts = rows.map((r) => (parseFloat(r.qty) || 0) * (parseFloat(r.rate) || 0));
   const subtotal = amounts.reduce((s, a) => s + a, 0);
 
   const handleSaveOrder = async () => {
@@ -85,43 +105,41 @@ export default function Bill() {
       return;
     }
 
-    const orderItems = rows
-      .filter(r => r.productId && r.qty && r.rate)
-      .map(r => {
-        const product = products.find(p => p.id === parseInt(r.productId));
-        if (product && parseInt(r.qty) > product.stock) {
-          throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${r.qty}`);
-        }
-        return {
-          product: parseInt(r.productId),
-          product_name: product?.name || r.particulars,
-          particulars: product?.name || r.particulars,
-          quantity: parseInt(r.qty),
-          rate: parseFloat(r.rate)
-        };
-      });
-
-    if (orderItems.length === 0) {
-      alert("Please select at least one product and fill quantity & rate");
-      return;
-    }
-
-    setSaving(true);
     try {
+      const orderItems = rows
+        .filter((r) => r.productId && r.qty && r.rate)
+        .map((r) => {
+          const product = products.find((p) => p.id === parseInt(r.productId));
+          if (product && parseInt(r.qty) > product.stock) {
+            throw new Error(`Insufficient stock for ${product.name}.`);
+          }
+          return {
+            product: parseInt(r.productId),
+            particulars: product?.name || r.particulars,
+            quantity: parseInt(r.qty),
+            rate: parseFloat(r.rate),
+          };
+        });
+
+      if (orderItems.length === 0) {
+        alert("Please select at least one product and fill quantity & rate");
+        return;
+      }
+
+      setSaving(true);
+
       const payload = {
         order_id: `ORD-${Date.now()}`,
         customer: buyerName,
         customer_address: buyerAddress,
         date: dateEN,
         date_np: dateNP,
-        items: orderItems
+        items: orderItems,
       };
 
-      const response = await fetch('/api/orders/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload)
+      const response = await fetchWithAuth("/api/orders/", {
+        method: "POST",
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -144,28 +162,26 @@ export default function Bill() {
   };
 
   const handlePrint = () => {
-    document.body.classList.add('printing');
+    document.body.classList.add("printing");
     window.print();
     setTimeout(() => {
-      document.body.classList.remove('printing');
+      document.body.classList.remove("printing");
     }, 100);
   };
 
   return (
     <div className="bill-page">
       <div className="bill-sheet">
-
         {/* Header */}
         <div className="bill-header">
-          <div className="header-logo">
-            <img src={logo} alt="Company Logo" className="company-logo" />
-          </div>
-
           <div className="header-left">
-            <h1 className="company-name">{companyName}</h1>
-            <p className="company-sub">{companySubtitle}</p>
-            <p className="company-addr">{companyAddress}</p>
-            <p className="company-phone">Phone: {phone}</p>
+            <img src={logo} alt="Company Logo" className="company-logo" />
+            <div>
+              <h1 className="company-name">{companyName}</h1>
+              <p className="company-sub">{companySubtitle}</p>
+              <p className="company-addr">{companyAddress}</p>
+              <p className="company-phone">Phone: {phone}</p>
+            </div>
           </div>
 
           <div className="header-right">
@@ -178,6 +194,7 @@ export default function Bill() {
                 className="date-input"
               />
             </div>
+
             <div className="date-section">
               <label className="date-label">Date (NP)</label>
               <NepaliDatePicker
@@ -205,7 +222,7 @@ export default function Bill() {
             <input
               value={buyerAddress}
               onChange={(e) => setBuyerAddress(e.target.value)}
-              placeholder="Buyer address (optional)"
+              placeholder="Buyer address"
               className="buyer-input"
             />
           </div>
@@ -213,103 +230,76 @@ export default function Bill() {
 
         {/* Stock warning */}
         {availableProducts.length === 0 && (
-          <div className="no-print" style={{
-            backgroundColor: '#fee2e2',
-            border: '1px solid #ef4444',
-            color: '#991b1b',
-            padding: '12px',
-            borderRadius: '6px',
-            marginBottom: '20px',
-            textAlign: 'center'
-          }}>
+          <div className="stock-warning">
             ⚠️ No products available in stock. Please add inventory first.
           </div>
         )}
 
-        {/* Table */}
+        {/* Bill Table */}
         <div className="table-wrapper">
           <table className="bill-table">
             <thead>
               <tr>
-                <th className="no-print col-select">Select</th>
-                <th className="col-sno">S.No</th>
-                <th className="no-print col-product">Product</th>
-                <th className="col-particulars">Particulars</th>
-                <th className="col-qty">Qty</th>
-                <th className="col-rate">Rate</th>
-                <th className="col-amount">Amount</th>
+                <th>Select</th>
+                <th>S.No</th>
+                <th>Product</th>
+                <th>Particulars</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Amount</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r, i) => {
                 const amt = (parseFloat(r.qty) || 0) * (parseFloat(r.rate) || 0);
-                const selectedProduct = availableProducts.find(p => String(p.id) === String(r.productId));
+                const selectedProduct = availableProducts.find(
+                  (p) => String(p.id) === String(r.productId)
+                );
                 const maxQty = selectedProduct ? selectedProduct.stock : 0;
-                const hasData = r.particulars && r.particulars.trim() && r.particulars !== "(Select product)";
-
                 return (
-                  <tr key={i} className={!hasData ? 'no-print-empty' : ''}>
-                    <td className="no-print col-select">
+                  <tr key={i}>
+                    <td>
                       <input
                         type="checkbox"
                         checked={selectedRows.has(i)}
                         onChange={() => toggleRowSelection(i)}
                       />
                     </td>
-                    <td className="col-sno">{i + 1}</td>
-                    <td className="no-print col-product">
+                    <td>{i + 1}</td>
+                    <td>
                       <select
                         value={r.productId}
                         onChange={(e) => handleProductChange(i, e.target.value)}
-                        className="product-select"
                       >
-                        <option value="">Select Product...</option>
-                        {availableProducts.map(p => (
+                        <option value="">-- Select Product --</option>
+                        {availableProducts.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name} (Stock: {p.stock})
                           </option>
                         ))}
                       </select>
                     </td>
-                    <td className="col-particulars">
-                      <span>{r.particulars && r.particulars.trim() ? r.particulars : "(Select product)"}</span>
-                    </td>
-                    <td className="col-qty">
+                    <td>{r.particulars || "(None selected)"}</td>
+                    <td>
                       <input
                         type="number"
+                        value={r.qty}
                         min="0"
                         max={maxQty}
-                        value={r.qty}
-                        onChange={(e) => {
-                          const copy = [...rows];
-                          const enteredQty = parseInt(e.target.value) || 0;
-                          if (selectedProduct && enteredQty > selectedProduct.stock) {
-                            alert(`Only ${selectedProduct.stock} units available for ${selectedProduct.name}`);
-                            copy[i].qty = selectedProduct.stock;
-                          } else {
-                            copy[i].qty = e.target.value;
-                          }
-                          setRows(copy);
-                        }}
-                        className="qty-input"
+                        onChange={(e) => handleQtyChange(i, e.target.value)}
                         disabled={!r.productId}
                       />
                     </td>
-                    <td className="col-rate">
+                    <td>
                       <input
                         type="number"
+                        value={r.rate}
                         min="0"
                         step="0.01"
-                        value={r.rate}
-                        onChange={(e) => {
-                          const copy = [...rows];
-                          copy[i].rate = e.target.value;
-                          setRows(copy);
-                        }}
-                        className="rate-input"
+                        onChange={(e) => handleRateChange(i, e.target.value)}
                       />
                     </td>
-                    <td className="col-amount">{amt.toFixed(2)}</td>
+                    <td>{amt.toFixed(2)}</td>
                   </tr>
                 );
               })}
@@ -318,15 +308,27 @@ export default function Bill() {
         </div>
 
         {/* Controls */}
-        <div className="controls-section no-print">
-          <button onClick={addRow} className="btn btn-add">+ Add Row</button>
-          <button onClick={deleteSelectedRows} disabled={selectedRows.size === 0} className="btn btn-delete">
+        <div className="controls-section">
+          <button onClick={addRow} className="btn btn-add">
+            + Add Row
+          </button>
+          <button
+            onClick={deleteSelectedRows}
+            disabled={selectedRows.size === 0}
+            className="btn btn-delete"
+          >
             Delete Selected ({selectedRows.size})
           </button>
-          <button onClick={handleSaveOrder} disabled={saving || availableProducts.length === 0} className="btn btn-save">
-            {saving ? 'Saving...' : 'Save & Complete Order'}
+          <button
+            onClick={handleSaveOrder}
+            disabled={saving || availableProducts.length === 0}
+            className="btn btn-save"
+          >
+            {saving ? "Saving..." : "Save & Complete Order"}
           </button>
-          <button onClick={handlePrint} className="btn btn-print">Print / PDF</button>
+          <button onClick={handlePrint} className="btn btn-print">
+            Print / PDF
+          </button>
         </div>
 
         {/* Summary */}
@@ -344,7 +346,6 @@ export default function Bill() {
           <p>For {companyName}</p>
           <p className="signature-line">Authorised Signature</p>
         </div>
-
       </div>
     </div>
   );

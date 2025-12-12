@@ -1,13 +1,14 @@
 .sports-container {
   width: 90%;
   margin: auto;
-  padding: 20px;
+  padding: 1px;
 }
 
 .add-item-section {
   margin-bottom: 20px;
   display: flex;
   gap: 10px;
+  padding: 50px;
 }
 
 .add-item-section input {

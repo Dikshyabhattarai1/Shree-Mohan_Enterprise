@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import {
   LineChart,
   Line,
@@ -9,9 +9,11 @@ import {
   Legend,
   ResponsiveContainer
 } from "recharts";
+import { AppContext } from "./AppContext";
 import "./SalesRecords.css";
 
 function SalesRecords() {
+  const { fetchWithAuth } = useContext(AppContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState("monthly");
@@ -31,15 +33,15 @@ function SalesRecords() {
   ------------------------------------ */
   useEffect(() => {
     fetchOrders();
+    // eslint-disable-next-line
   }, []);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/orders/", { credentials: "include" });
+      const response = await fetchWithAuth("/api/orders/");
       if (response.ok) {
         const data = await response.json();
-        // support old & new API shapes: either array or { records: [...] }
         setOrders(Array.isArray(data) ? data : data.records || []);
       } else {
         console.error("Failed to fetch orders");
@@ -52,9 +54,7 @@ function SalesRecords() {
   };
 
   /* ------------------------------------
-     Apply date filter (calls backend with start/end)
-     start -> YYYY-MM-01
-     end   -> YYYY-MM-lastday
+     Apply date filter
   ------------------------------------ */
   const applyDateFilter = async () => {
     if (!startYear || !startMonth || !endYear || !endMonth) return;
@@ -62,22 +62,18 @@ function SalesRecords() {
     try {
       setLoading(true);
 
-      // compute start and end full dates
       const startStr = `${startYear}-${startMonth}-01`;
-
-      // last day of endMonth:
       const endDay = new Date(parseInt(endYear, 10), parseInt(endMonth, 10), 0).getDate();
       const endStr = `${endYear}-${endMonth}-${String(endDay).padStart(2, "0")}`;
 
       const url = `/api/orders/?start=${encodeURIComponent(startStr)}&end=${encodeURIComponent(endStr)}`;
 
-      const response = await fetch(url, { credentials: "include" });
+      const response = await fetchWithAuth(url);
       if (response.ok) {
         const data = await response.json();
         setOrders(Array.isArray(data) ? data : data.records || []);
         setCurrentPage(1);
-        setShowCustomRange(true); // keep panel open (optional)
-        // clear aggregation selection because user requested custom range
+        setShowCustomRange(true);
         setFilterType("");
       } else {
         console.error("Failed to fetch filtered orders");
@@ -90,7 +86,7 @@ function SalesRecords() {
   };
 
   /* ------------------------------------
-     Clear date filter (reset to full list)
+     Clear date filter
   ------------------------------------ */
   const clearDateFilter = async () => {
     setStartMonth("");
@@ -109,7 +105,6 @@ function SalesRecords() {
   const salesRecords = useMemo(() => {
     const records = [];
     orders.forEach((order) => {
-      // support various possible field names
       const items = order.items || order.order_items || [];
       items.forEach((item) => {
         records.push({
@@ -127,16 +122,13 @@ function SalesRecords() {
   }, [orders]);
 
   /* ------------------------------------
-     Client-side fallback filter (in case backend not used)
-     We'll use salesRecords directly (server-filtered if applyDateFilter used)
+     Client-side fallback filter
   ------------------------------------ */
   const filteredRecords = useMemo(() => {
-    // if user hasn't filled date selects we just return salesRecords (server fetch will handle)
     if (!startYear || !startMonth || !endYear || !endMonth) {
       return salesRecords;
     }
 
-    // compute full start/end dates (client-side check)
     const startDate = new Date(parseInt(startYear, 10), parseInt(startMonth, 10) - 1, 1);
     const endDay = new Date(parseInt(endYear, 10), parseInt(endMonth, 10), 0).getDate();
     const endDate = new Date(parseInt(endYear, 10), parseInt(endMonth, 10) - 1, endDay);
@@ -149,12 +141,11 @@ function SalesRecords() {
   }, [salesRecords, startYear, startMonth, endYear, endMonth]);
 
   /* ------------------------------------
-     Aggregation (daily / weekly / monthly)
+     Aggregation
   ------------------------------------ */
   const aggregatedData = useMemo(() => {
     const grouped = {};
-
-    const source = filteredRecords; // already server filtered if applyDateFilter was used
+    const source = filteredRecords;
 
     source.forEach((record) => {
       if (!record.date) return;
@@ -162,21 +153,19 @@ function SalesRecords() {
       let key;
 
       if (filterType === "daily") {
-        key = date.toISOString().slice(0, 10); // YYYY-MM-DD
+        key = date.toISOString().slice(0, 10);
       } else if (filterType === "weekly") {
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         key = `Week of ${weekStart.toISOString().slice(0, 10)}`;
       } else {
-        // default monthly grouping
-        key = date.toISOString().slice(0, 7); // YYYY-MM
+        key = date.toISOString().slice(0, 7);
       }
 
       if (!grouped[key]) grouped[key] = { period: key, total: 0 };
       grouped[key].total += Number(record.total) || 0;
     });
 
-    // sort ascending so chart shows left->right older->newer
     return Object.values(grouped).sort((a, b) => new Date(a.period) - new Date(b.period));
   }, [filteredRecords, filterType]);
 
@@ -214,15 +203,12 @@ function SalesRecords() {
     if (!window.confirm("Delete this entire order?")) return;
 
     try {
-      const response = await fetch(`/api/orders/${orderId}/`, {
-        method: "DELETE",
-        credentials: "include"
+      const response = await fetchWithAuth(`/api/orders/${orderId}/`, {
+        method: "DELETE"
       });
 
       if (response.ok) {
-        // refresh (respect active filter)
         if (startYear && startMonth && endYear && endMonth) {
-          // reapply the filter by calling applyDateFilter again
           await applyDateFilter();
         } else {
           await fetchOrders();
@@ -237,10 +223,10 @@ function SalesRecords() {
   };
 
   /* ------------------------------------
-     Date select options (month/year arrays)
+     Date select options
   ------------------------------------ */
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - i); // current year and 9 previous
+  const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
   const months = [
     { value: "01", label: "January" },
     { value: "02", label: "February" },
@@ -258,9 +244,6 @@ function SalesRecords() {
 
   const isDateFilterActive = startYear && startMonth && endYear && endMonth;
 
-  /* ------------------------------------
-     Loading / Empty UI
-  ------------------------------------ */
   if (loading) {
     return (
       <div className="sales-container">
@@ -306,14 +289,13 @@ function SalesRecords() {
                 className={`filter-btn ${showCustomRange ? "active" : ""}`}
                 onClick={() => {
                   setShowCustomRange((v) => !v);
-                  setFilterType(""); // disable aggregation when custom range open
+                  setFilterType("");
                 }}
               >
                 CUSTOM RANGE
               </button>
             </div>
 
-            {/* CUSTOM RANGE DROPDOWN PANEL */}
             {showCustomRange && (
               <div className="custom-range-box">
                 <h4>📅 Select Date Range</h4>

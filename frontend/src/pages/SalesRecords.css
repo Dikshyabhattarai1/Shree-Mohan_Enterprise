@@ -22,24 +22,40 @@
 }
 
 /* Buttons */
-.sales-btn {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+.sales-btn,
+.clear-btn {
+  padding: 10px 20px;                     /* Equal padding */
   border: none;
-  border-radius: 8px;
+  border-radius: 8px;                     /* Equal border-radius */
   font-weight: 700;
   cursor: pointer;
   transition: all 0.22s ease;
-  margin-bottom: 18px;
+  color: white;                            /* Text color */
+  text-align: center;
 }
 
+/* Background colors */
+.sales-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.clear-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Hover effects */
 .sales-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 30px rgba(102, 126, 234, 0.18);
 }
 
-.sales-btn:active {
+.clear-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(239, 68, 68, 0.18);
+}
+
+.sales-btn:active,
+.clear-btn:active {
   transform: translateY(0);
 }
 
@@ -139,26 +155,10 @@
 
 /* Actions row */
 .custom-range-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-top: 6px;
-}
-
-.clear-btn {
-  padding: 10px 16px;
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
-
-.clear-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.12);
+  display: flex;       /* Arrange buttons in a row */
+  gap: 16px;           /* Space between Apply and Clear buttons */
+  padding: 10px 12px;
+  border-radius: 1px;
 }
 
 /* Date range info */
@@ -238,17 +238,41 @@
 
 .table-wrapper {
   overflow-x: auto;
+  width: 100%;
+  color: black;
+  background-color: white;
+
+
 }
 
 .sales-table {
   width: 100%;
+  min-width: 900px; /* Minimum width to accommodate all columns */
+  table-layout: fixed;
   border-collapse: collapse;
+
 }
 
 .sales-table thead tr {
-  background: #0f172a;
   color: white;
+  background-color: black;
 }
+.sales-table thead th {
+  background-color: black !important; /* Make sure it overrides other styles */
+  color: white !important;
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  position: sticky;      /* Make header stick while scrolling */
+  top: 0;                /* Stick to top of table */
+  z-index: 10;           /* Ensure it appears above table rows */
+}
+
 
 .sales-table th {
   padding: 14px 16px;
@@ -259,6 +283,7 @@
   text-transform: uppercase;
   letter-spacing: 0.6px;
   border-right: 1px solid rgba(255,255,255,0.06);
+  color: white;
 }
 
 .sales-table th:last-child {
@@ -266,8 +291,11 @@
 }
 
 .sales-table td {
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid #f3f6fb;
+  white-space: nowrap; /* Keep data in one line */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sales-table tbody tr:hover {
@@ -345,4 +373,3 @@
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-

@@ -1,9 +1,9 @@
 import React, { useContext, useState } from "react";
 import "./SportsItems.css";
-import { AppContext } from "../pages/AppContext";
+import { AppContext } from "./AppContext";
 
 function SportsItems() {
-  const { products, fetchProducts } = useContext(AppContext);
+  const { products, fetchProducts, fetchWithAuth } = useContext(AppContext);
   const [newItemName, setNewItemName] = useState("");
   const [newItemStock, setNewItemStock] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
@@ -11,10 +11,15 @@ function SportsItems() {
   const [loading, setLoading] = useState(false);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
 
+  // Sort products alphabetically by name
+  const sortedProducts = [...products].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
   // Filter products based on stock
-  const inStockProducts = products.filter(p => p.stock > 0);
-  const outOfStockProducts = products.filter(p => p.stock === 0);
-  const displayProducts = showOutOfStock ? products : inStockProducts;
+  const inStockProducts = sortedProducts.filter(p => p.stock > 0);
+  const outOfStockProducts = sortedProducts.filter(p => p.stock === 0);
+  const displayProducts = showOutOfStock ? sortedProducts : inStockProducts;
 
   // Add New Item
   const addItem = async () => {
@@ -41,36 +46,47 @@ function SportsItems() {
     }
 
     setLoading(true);
+    
+    // 🔵 DEBUG: Check token
+    const token = localStorage.getItem('access_token');
+    console.log("🔵 Token in localStorage:", token ? "✅ EXISTS" : "❌ MISSING");
+    console.log("🔵 Token value:", token);
+    
     try {
-      const response = await fetch('/api/products/', {
+      const payload = {
+        name: newItemName,
+        stock: Number(newItemStock),
+        price: Number(newItemPrice),
+        description: newItemDescription || "",
+        image: ""
+      };
+      
+      console.log("🔵 Sending payload:", payload);
+      
+      const response = await fetchWithAuth('/api/products/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: newItemName,
-          stock: Number(newItemStock),
-          price: Number(newItemPrice),
-          description: newItemDescription || "",
-          image: ""
-        })
+        body: JSON.stringify(payload)
       });
 
+      console.log("🔵 Response status:", response.status);
+      console.log("🔵 Response ok:", response.ok);
+
       if (response.ok) {
+        console.log("✅ Item added successfully!");
         setNewItemName("");
         setNewItemStock("");
         setNewItemPrice("");
         setNewItemDescription("");
-        await fetchProducts();
+        await fetchProducts(); // Fetch updated products
         alert("Item added successfully!");
       } else {
         const err = await response.json();
+        console.log("❌ Error response:", err);
         alert("Error adding item: " + JSON.stringify(err));
       }
     } catch (error) {
-      console.error("Error adding item:", error);
-      alert("Failed to add item");
+      console.error("❌ Error adding item:", error);
+      alert("Failed to add item: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -84,9 +100,8 @@ function SportsItems() {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/products/${id}/`, {
-        method: 'DELETE',
-        credentials: 'include',
+      const response = await fetchWithAuth(`/api/products/${id}/`, {
+        method: 'DELETE'
       });
 
       if (response.ok) {
