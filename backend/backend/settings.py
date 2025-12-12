@@ -11,12 +11,11 @@ SECRET_KEY = 'django-insecure-+()hat!yr10-8_-dk3g8_^p*$lll3)4zv4(e5m+#qa55y&92pz
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]  # Use specific hosts in production
+ALLOWED_HOSTS = ["*"]  # Change in production
 
-
-# -------------------------------------------------
+# --------------------------
 # INSTALLED APPS
-# -------------------------------------------------
+# --------------------------
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -30,47 +29,30 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt',
+
     # Your apps
     'api',
 ]
 
-# -------------------------------------------------
-# REST FRAMEWORK SETTINGS
-# -------------------------------------------------
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': [],
-}
-
-# -------------------------------------------------
+# --------------------------
 # MIDDLEWARE
-# -------------------------------------------------
+# --------------------------
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # KEEP ON TOP
+    'corsheaders.middleware.CorsMiddleware',  # keep on top
     'django.middleware.common.CommonMiddleware',
-
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-
-    # ❗ COMMENT OUT CSRF because using React frontend
-    # 'django.middleware.csrf.CsrfViewMiddleware',
-
+    # 'django.middleware.csrf.CsrfViewMiddleware',  # disable for React
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    # WhiteNoise for serving static files in production
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # for static files
 ]
 
-
-# -------------------------------------------------
+# --------------------------
 # CORS SETTINGS
-# -------------------------------------------------
+# --------------------------
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
@@ -85,19 +67,27 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+# --------------------------
+# REST FRAMEWORK
+# --------------------------
 
-# -------------------------------------------------
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [],
+}
+
+# --------------------------
 # URLS / TEMPLATES
-# -------------------------------------------------
+# --------------------------
 
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            BASE_DIR / "frontend_build",  # React build folder
-        ],
+        'DIRS': [BASE_DIR / "frontend_build" / "build"],  # React build
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -110,13 +100,11 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-
-# -------------------------------------------------
+# --------------------------
 # DATABASE
-# -------------------------------------------------
+# --------------------------
 
 DATABASES = {
     'default': {
@@ -125,10 +113,9 @@ DATABASES = {
     }
 }
 
-
-# -------------------------------------------------
-# PASSWORD VALIDATION
-# -------------------------------------------------
+# --------------------------
+# PASSWORD VALIDATORS
+# --------------------------
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -137,35 +124,31 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
-# -------------------------------------------------
+# --------------------------
 # INTERNATIONALIZATION
-# -------------------------------------------------
+# --------------------------
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-
-# -------------------------------------------------
+# --------------------------
 # STATIC FILES
-# -------------------------------------------------
+# --------------------------
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / "static"  # For collectstatic in production
+STATIC_ROOT = BASE_DIR / "static"  # collectstatic goes here
 
-# Serve React build static files
 STATICFILES_DIRS = [
-    BASE_DIR / "frontend_build" / "static",
+    BASE_DIR / "frontend_build" / "build" / "static",  # React build static
 ]
 
-# WhiteNoise settings (optional, for production)
+# WhiteNoise for production
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-
-# -------------------------------------------------
+# --------------------------
 # DEFAULT AUTO FIELD
-# -------------------------------------------------
+# --------------------------
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

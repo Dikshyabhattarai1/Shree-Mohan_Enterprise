@@ -4,16 +4,16 @@ import "nepali-datepicker-reactjs/dist/index.css";
 import NepaliDate from "nepali-date-converter";
 import { AppContext } from "./AppContext";
 import "./Bill.css";
+import logo from "./images/logo.png.jpg"; // exact filename
 
 export default function Bill() {
   const { products, fetchProducts } = useContext(AppContext);
-  
+
   const companyName = "ShreeMohan Enterprise";
   const companySubtitle = "Sports Items";
   const companyAddress = "Biratnagar, Mahendra Chowk";
   const phone = "9852063234";
 
-  // Auto-set today's date in both English and Nepali
   const today = new Date();
   const todayNepali = new NepaliDate(today);
   const todayNepaliString = todayNepali.format("YYYY-MM-DD");
@@ -37,22 +37,17 @@ export default function Bill() {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    console.log('Products loaded:', products);
-  }, [products]);
-
-  // ✅ Filter out products with zero stock
   const availableProducts = products.filter(p => p.stock > 0);
 
   const addRow = () => setRows([...rows, { productId: "", particulars: "", qty: "", rate: "" }]);
-  
+
   const toggleRowSelection = (i) => {
     const newSelected = new Set(selectedRows);
     if (newSelected.has(i)) newSelected.delete(i);
     else newSelected.add(i);
     setSelectedRows(newSelected);
   };
-  
+
   const deleteSelectedRows = () => {
     const newRows = rows.filter((_, idx) => !selectedRows.has(idx));
     setRows(newRows);
@@ -60,20 +55,16 @@ export default function Bill() {
   };
 
   const handleProductChange = (i, value) => {
-    console.log(`Row ${i}: Product selected = ${value}`);
     const copy = [...rows];
     copy[i].productId = value;
-    
+
     if (value) {
       const product = availableProducts.find(p => String(p.id) === String(value));
-      console.log(`Looking for product ${value}, found:`, product);
       if (product) {
         copy[i].particulars = product.name;
         copy[i].rate = product.price;
-        console.log(`✅ Updated row ${i}: particulars="${product.name}", rate=${product.price}`);
       }
     } else {
-      // Clear the row if deselected
       copy[i].particulars = "";
       copy[i].rate = "";
       copy[i].qty = "";
@@ -94,22 +85,13 @@ export default function Bill() {
       return;
     }
 
-    console.log('=== SAVING ORDER ===');
-    console.log('Buyer Name:', buyerName);
-    console.log('Products in context:', products);
-    console.log('Rows:', rows);
-
     const orderItems = rows
       .filter(r => r.productId && r.qty && r.rate)
       .map(r => {
         const product = products.find(p => p.id === parseInt(r.productId));
-        console.log('Looking for product ID:', r.productId, 'Found:', product);
-        
-        // ✅ Check stock availability
         if (product && parseInt(r.qty) > product.stock) {
           throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${r.qty}`);
         }
-        
         return {
           product: parseInt(r.productId),
           product_name: product?.name || r.particulars,
@@ -118,8 +100,6 @@ export default function Bill() {
           rate: parseFloat(r.rate)
         };
       });
-
-    console.log('Order Items to save:', orderItems);
 
     if (orderItems.length === 0) {
       alert("Please select at least one product and fill quantity & rate");
@@ -136,8 +116,6 @@ export default function Bill() {
         date_np: dateNP,
         items: orderItems
       };
-      
-      console.log('Final payload being sent:', payload);
 
       const response = await fetch('/api/orders/', {
         method: 'POST',
@@ -148,20 +126,17 @@ export default function Bill() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Success response:', data);
-        alert(`Order saved successfully!\nOrder ID: ${data.order_id}\n\nCustomer: ${buyerName}\nItems: ${orderItems.length}`);
-        await fetchProducts(); // ✅ Refresh products to get updated stock
+        alert(`Order saved successfully!\nOrder ID: ${data.order_id}`);
+        await fetchProducts();
         setBuyerName("");
         setBuyerAddress("");
         setRows(initialRows);
         setSelectedRows(new Set());
       } else {
         const error = await response.json();
-        console.error('Server error:', error);
         alert("Error: " + (error.detail || JSON.stringify(error)));
       }
     } catch (error) {
-      console.error('Error:', error);
       alert("Failed to save order: " + error.message);
     } finally {
       setSaving(false);
@@ -169,28 +144,36 @@ export default function Bill() {
   };
 
   const handlePrint = () => {
+    document.body.classList.add('printing');
     window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing');
+    }, 100);
   };
 
   return (
     <div className="bill-page">
       <div className="bill-sheet">
-        
+
         {/* Header */}
         <div className="bill-header">
+          <div className="header-logo">
+            <img src={logo} alt="Company Logo" className="company-logo" />
+          </div>
+
           <div className="header-left">
             <h1 className="company-name">{companyName}</h1>
             <p className="company-sub">{companySubtitle}</p>
             <p className="company-addr">{companyAddress}</p>
             <p className="company-phone">Phone: {phone}</p>
           </div>
-          
+
           <div className="header-right">
             <div className="date-section">
               <label className="date-label">Date (EN)</label>
-              <input 
-                type="date" 
-                value={dateEN} 
+              <input
+                type="date"
+                value={dateEN}
                 onChange={(e) => setDateEN(e.target.value)}
                 className="date-input"
               />
@@ -210,27 +193,27 @@ export default function Bill() {
         <div className="buyer-section">
           <div className="buyer-field">
             <label className="buyer-label">Mr./Ms.</label>
-            <input 
-              value={buyerName} 
-              onChange={(e) => setBuyerName(e.target.value)} 
+            <input
+              value={buyerName}
+              onChange={(e) => setBuyerName(e.target.value)}
               placeholder="Buyer name"
               className="buyer-input"
             />
           </div>
           <div className="buyer-field">
             <label className="buyer-label">Address</label>
-            <input 
-              value={buyerAddress} 
-              onChange={(e) => setBuyerAddress(e.target.value)} 
+            <input
+              value={buyerAddress}
+              onChange={(e) => setBuyerAddress(e.target.value)}
               placeholder="Buyer address (optional)"
               className="buyer-input"
             />
           </div>
         </div>
 
-        {/* ✅ Stock warning message */}
+        {/* Stock warning */}
         {availableProducts.length === 0 && (
-          <div style={{
+          <div className="no-print" style={{
             backgroundColor: '#fee2e2',
             border: '1px solid #ef4444',
             color: '#991b1b',
@@ -250,7 +233,7 @@ export default function Bill() {
               <tr>
                 <th className="no-print col-select">Select</th>
                 <th className="col-sno">S.No</th>
-                <th className="col-product">Product</th>
+                <th className="no-print col-product">Product</th>
                 <th className="col-particulars">Particulars</th>
                 <th className="col-qty">Qty</th>
                 <th className="col-rate">Rate</th>
@@ -262,28 +245,25 @@ export default function Bill() {
                 const amt = (parseFloat(r.qty) || 0) * (parseFloat(r.rate) || 0);
                 const selectedProduct = availableProducts.find(p => String(p.id) === String(r.productId));
                 const maxQty = selectedProduct ? selectedProduct.stock : 0;
-                
+                const hasData = r.particulars && r.particulars.trim() && r.particulars !== "(Select product)";
+
                 return (
-                  <tr key={i}>
+                  <tr key={i} className={!hasData ? 'no-print-empty' : ''}>
                     <td className="no-print col-select">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={selectedRows.has(i)}
                         onChange={() => toggleRowSelection(i)}
                       />
                     </td>
                     <td className="col-sno">{i + 1}</td>
-                    <td className="col-product">
-                      <select 
+                    <td className="no-print col-product">
+                      <select
                         value={r.productId}
-                        onChange={(e) => {
-                          console.log('Select onChange fired');
-                          handleProductChange(i, e.target.value);
-                        }}
+                        onChange={(e) => handleProductChange(i, e.target.value)}
                         className="product-select"
                       >
                         <option value="">Select Product...</option>
-                        {/* ✅ Only show products with stock > 0 */}
                         {availableProducts.map(p => (
                           <option key={p.id} value={p.id}>
                             {p.name} (Stock: {p.stock})
@@ -292,21 +272,17 @@ export default function Bill() {
                       </select>
                     </td>
                     <td className="col-particulars">
-                      <span>
-                        {r.particulars && r.particulars.trim() ? r.particulars : "(Select product)"}
-                      </span>
+                      <span>{r.particulars && r.particulars.trim() ? r.particulars : "(Select product)"}</span>
                     </td>
                     <td className="col-qty">
-                      <input 
-                        type="number" 
-                        min="0" 
-                        max={maxQty} // ✅ Set max to available stock
-                        value={r.qty} 
+                      <input
+                        type="number"
+                        min="0"
+                        max={maxQty}
+                        value={r.qty}
                         onChange={(e) => {
                           const copy = [...rows];
                           const enteredQty = parseInt(e.target.value) || 0;
-                          
-                          // ✅ Validate against stock
                           if (selectedProduct && enteredQty > selectedProduct.stock) {
                             alert(`Only ${selectedProduct.stock} units available for ${selectedProduct.name}`);
                             copy[i].qty = selectedProduct.stock;
@@ -316,15 +292,15 @@ export default function Bill() {
                           setRows(copy);
                         }}
                         className="qty-input"
-                        disabled={!r.productId} // ✅ Disable if no product selected
+                        disabled={!r.productId}
                       />
                     </td>
                     <td className="col-rate">
-                      <input 
-                        type="number" 
-                        min="0" 
+                      <input
+                        type="number"
+                        min="0"
                         step="0.01"
-                        value={r.rate} 
+                        value={r.rate}
                         onChange={(e) => {
                           const copy = [...rows];
                           copy[i].rate = e.target.value;
@@ -333,9 +309,7 @@ export default function Bill() {
                         className="rate-input"
                       />
                     </td>
-                    <td className="col-amount">
-                      {amt.toFixed(2)}
-                    </td>
+                    <td className="col-amount">{amt.toFixed(2)}</td>
                   </tr>
                 );
               })}
@@ -345,26 +319,14 @@ export default function Bill() {
 
         {/* Controls */}
         <div className="controls-section no-print">
-          <button onClick={addRow} className="btn btn-add">
-            + Add Row
-          </button>
-          <button 
-            onClick={deleteSelectedRows}
-            disabled={selectedRows.size === 0}
-            className="btn btn-delete"
-          >
+          <button onClick={addRow} className="btn btn-add">+ Add Row</button>
+          <button onClick={deleteSelectedRows} disabled={selectedRows.size === 0} className="btn btn-delete">
             Delete Selected ({selectedRows.size})
           </button>
-          <button 
-            onClick={handleSaveOrder}
-            disabled={saving || availableProducts.length === 0}
-            className="btn btn-save"
-          >
+          <button onClick={handleSaveOrder} disabled={saving || availableProducts.length === 0} className="btn btn-save">
             {saving ? 'Saving...' : 'Save & Complete Order'}
           </button>
-          <button onClick={handlePrint} className="btn btn-print">
-            Print / PDF
-          </button>
+          <button onClick={handlePrint} className="btn btn-print">Print / PDF</button>
         </div>
 
         {/* Summary */}

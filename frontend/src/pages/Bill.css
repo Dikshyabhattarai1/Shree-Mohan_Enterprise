@@ -1,5 +1,3 @@
-/* Bill.css - Print Optimized */
-
 .bill-page {
   min-height: 100vh;
   background: #f5f5f5;
@@ -18,52 +16,98 @@
 .bill-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 30px;
-  padding-bottom: 20px;
+  padding-bottom: 10px;
   border-bottom: 2px solid #333;
+  flex-wrap: wrap;
+}
+
+/* ====== LOGO LEFT & TEXT CENTER ====== */
+.header-logo {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.company-logo {
+  width: 100px;       /* bigger logo */
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.header-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center horizontally */
+  text-align: center;
 }
 
 .header-left .company-name {
-  font-size: 28px;
+  font-size: 30px;    /* slightly bigger */
   font-weight: bold;
   margin: 0 0 5px 0;
   color: #1a1a1a;
 }
 
 .header-left .company-sub {
-  font-size: 14px;
+  font-size: 16px;    /* slightly bigger subtitle */
   margin: 0 0 3px 0;
   color: #555;
 }
 
 .header-left .company-addr,
 .header-left .company-phone {
-  font-size: 13px;
+  font-size: 14px;
   margin: 2px 0;
   color: #666;
 }
 
 .header-right {
   text-align: right;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  min-width: 180px;
 }
 
 .date-section {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .date-label {
-  display: block;
   font-size: 12px;
+  margin-bottom: 2px;
   font-weight: 600;
-  margin-bottom: 5px;
-  color: #444;
+  color: #333;
 }
 
 .date-input {
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 13px;
+  padding: 3px 6px !important;
+  font-size: 14px !important;
+  height: 28px !important;
+  width: 140px !important;
+}
+
+.nepali-date-picker input {
+  padding: 3px 6px !important;
+  font-size: 14px !important;
+  height: 28px !important;
+  width: 140px !important;
+}
+
+.np-datepicker-container,
+.ndp-input-wrapper {
+  height: 28px !important;
 }
 
 /* Buyer Section */
@@ -283,6 +327,7 @@
   text-align: right;
   margin-top: 60px;
   padding-top: 20px;
+  margin-right: 50px;
 }
 
 .signature-section p {
@@ -300,273 +345,19 @@
   margin-top: 10px;
 }
 
-/* ============================================
-   PRINT STYLES - CRITICAL FOR PROPER PRINTING
-   ============================================ */
-
+/* PRINT STYLES */
 @media print {
-  /* Reset page */
-  @page {
-    size: A4;
-    margin: 10mm 15mm;
+  nav, .no-print, .col-select, .controls-section, .btn, button, header {
+    display: none !important;
   }
-
   * {
-    box-sizing: border-box;
-  }
-
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  /* Hide navigation and non-printable elements */
-  nav,
-  header,
-  .navbar,
-  .navigation,
-  .no-print,
-  .controls-section,
-  .btn,
-  button,
-  [class*="nav"],
-  [class*="Nav"] {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Hide the Product dropdown column */
-  .col-product,
-  .bill-table th:nth-child(3),
-  .bill-table td:nth-child(3) {
-    display: none !important;
-  }
-
-  /* Hide Select checkbox column */
-  .col-select,
-  .bill-table th:nth-child(1),
-  .bill-table td:nth-child(1) {
-    display: none !important;
-  }
-
-  /* Adjust page styling */
-  .bill-page {
-    background: white !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-height: auto !important;
-  }
-
-  .bill-sheet {
-    max-width: 100% !important;
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    page-break-after: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /* Prevent page breaks inside elements */
-  .bill-header,
-  .buyer-section,
-  .signature-section,
-  .summary-section,
-  .table-wrapper {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  /* Adjust table for print */
-  .bill-table {
-    font-size: 10px !important;
-    page-break-inside: auto;
-    width: 100% !important;
-    margin: 10px 0 !important;
-  }
-
-  .bill-table tr {
-    page-break-inside: avoid;
-    page-break-after: auto;
-  }
-
-  .bill-table thead {
-    display: table-header-group;
-  }
-
-  .bill-table th,
-  .bill-table td {
-    padding: 5px 4px !important;
-  }
-
-  /* Adjust column widths for print */
-  .col-sno {
-    width: 35px !important;
-  }
-
-  .col-particulars {
-    width: auto !important;
-  }
-
-  .col-qty {
-    width: 60px !important;
-  }
-
-  .col-rate {
-    width: 80px !important;
-  }
-
-  .col-amount {
-    width: 90px !important;
-  }
-
-  /* Make sure particulars text is visible */
-  .col-particulars span {
-    display: block;
-    word-wrap: break-word;
-    font-size: 10px !important;
-  }
-
-  /* Summary section adjustments */
-  .summary-section {
-    margin-top: 15px !important;
-    padding-top: 10px !important;
-  }
-
-  .grand-total {
-    font-size: 16px !important;
-  }
-
-  /* Signature section */
-  .signature-section {
-    margin-top: 30px !important;
-    padding-top: 10px !important;
-  }
-
-  .signature-line {
-    padding-top: 25px !important;
-  }
-
-  /* Ensure proper spacing */
-  .bill-header {
-    margin-bottom: 12px !important;
-    padding-bottom: 10px !important;
-  }
-
-  .buyer-section {
-    margin-bottom: 12px !important;
-    padding: 8px 0 !important;
-  }
-
-  .table-wrapper {
-    margin: 12px 0 !important;
-  }
-
-  /* Remove hover effects */
-  .bill-table tbody tr:hover {
-    background: inherit !important;
-  }
-
-  /* Force black text */
-  * {
-    color: #000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-
-  /* Keep table borders */
-  .bill-table,
-  .bill-table th,
-  .bill-table td {
-    border: 1px solid #333 !important;
-  }
-
-  /* Company header adjustments for print */
-  .header-left .company-name {
-    font-size: 22px !important;
-    margin-bottom: 3px !important;
-  }
-
-  .header-left .company-sub,
-  .header-left .company-addr,
-  .header-left .company-phone {
-    font-size: 11px !important;
-    margin: 1px 0 !important;
-  }
-
-  /* Buyer inputs - show values only */
-  .buyer-input {
-    border: none !important;
-    border-bottom: 1px solid #000 !important;
-    padding: 2px 0 !important;
-    font-size: 12px !important;
-    background: transparent !important;
-  }
-
-  /* Date section */
-  .date-label {
-    font-size: 10px !important;
-  }
-
-  .date-input {
-    font-size: 11px !important;
-    border: 1px solid #000 !important;
-    padding: 2px 4px !important;
-    background: white !important;
-  }
-
-  /* Hide input boxes in table - show values only */
-  .qty-input,
-  .rate-input {
-    border: none !important;
-    background: transparent !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    font-size: 10px !important;
-  }
-
-  .rate-input {
-    text-align: right !important;
-  }
-
-  .qty-input {
-    text-align: center !important;
-  }
-
-  /* Remove input styling - make it look like plain text */
-  input[type="number"],
-  input[type="text"],
-  input[type="date"] {
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
-  }
-
-  /* Hide placeholder text in print */
-  input::placeholder,
-  input::-webkit-input-placeholder,
-  input::-moz-placeholder {
-    color: transparent !important;
-    opacity: 0 !important;
-  }
-
-  /* Reduce all margins to fit on one page */
-  .terms-label {
-    font-size: 10px !important;
-  }
-
-  /* Force single page */
-  body, .bill-page, .bill-sheet {
-    height: auto !important;
-    overflow: visible !important;
-  }
+  @page { size: A4; margin: 10mm; }
+  body { margin: 0; padding: 0; background: white !important; }
+  .bill-page { background: white !important; padding: 0; margin: 0; min-height: auto; }
+  .bill-sheet { box-shadow: none; padding: 15px; margin: 0; max-width: 100%; page-break-after: avoid; transform: scale(0.95); transform-origin: top center; }
+  .header-left { margin-left: 0; text-align: center; align-items: center; }
+  .company-logo { width: 100px; height: auto; object-fit: contain; display: block; margin-bottom: 8px; }
 }
