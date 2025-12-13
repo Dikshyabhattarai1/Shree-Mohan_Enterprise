@@ -10,6 +10,11 @@ function SportsItems() {
   const [newItemDescription, setNewItemDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
+  const [popup, setPopup] = useState({
+          show: false,
+        message: "",
+       });
+
 
   // Sort products alphabetically by name
   const sortedProducts = [...products].sort((a, b) =>
@@ -78,7 +83,11 @@ function SportsItems() {
         setNewItemPrice("");
         setNewItemDescription("");
         await fetchProducts(); // Fetch updated products
-        alert("Item added successfully!");
+        setPopup({
+       show: true,
+       message: "✅ वस्तु सफलतापूर्वक थपियो",
+});
+
       } else {
         const err = await response.json();
         console.log("❌ Error response:", err);
@@ -121,6 +130,18 @@ function SportsItems() {
   return (
     <div className="sports-container">
       <h2>Sports Items List</h2>
+      {popup.show && (
+  <div className="popup-overlay">
+    <div className="popup-box">
+      <h3>Notification</h3>
+      <p>{popup.message}</p>
+      <button onClick={() => setPopup({ show: false, message: "" })}>
+        OK
+      </button>
+    </div>
+  </div>
+)}
+
 
       {/* Add Item Section */}
       <div className="add-item-section">
