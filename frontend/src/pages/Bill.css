@@ -1,255 +1,342 @@
+.company-logo {
+  width: 110px;
+  height: 120px;
+  object-fit: contain;
+  flex-shrink: 0;
+  margin-top: -40px;
+}/* A5 Bill Styling - Optimized for small paper format */
+
 .bill-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #e8e8e8;
   padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .bill-sheet {
-  max-width: 900px;
-  margin: 0 auto;
+  /* A5 size: 148mm x 210mm */
+  width: 148mm;
+  min-height: 210mm;
   background: white;
-  padding: 40px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  padding: 8mm;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  font-family: 'Arial', sans-serif;
+  position: relative;
 }
 
-/* Header Section */
+/* ========== HEADER ========== */
 .bill-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #333;
-  flex-wrap: wrap;
-}
-
-/* ====== LOGO LEFT & TEXT CENTER ====== */
-.header-logo {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  margin-right: 20px;
+  align-items: flex-start;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  position: relative;
 }
 
 .company-logo {
-  width: 100px;       /* bigger logo */
-  height: auto;
+  width: 90px;
+  height: 100px;
   object-fit: contain;
-  display: block;
-  margin-bottom: 8px;
+  flex-shrink: 0;
+  margin-top: -40px;
 }
 
-.header-left {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* center horizontally */
+.header-text {
   text-align: center;
+  flex: 1;
+  padding: 0 10px;
 }
 
-.header-left .company-name {
-  font-size: 30px;    /* slightly bigger */
+.company-name {
+  font-size: 16px;
   font-weight: bold;
-  margin: 0 0 5px 0;
-  color: #1a1a1a;
+  margin: 0 0 2px 0;
+  color: #000;
+  line-height: 1.2;
 }
 
-.header-left .company-sub {
-  font-size: 16px;    /* slightly bigger subtitle */
-  margin: 0 0 3px 0;
-  color: #555;
-}
-
-.header-left .company-addr,
-.header-left .company-phone {
-  font-size: 14px;
-  margin: 2px 0;
-  color: #666;
-}
-
-.header-right {
-  text-align: right;
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-end;
-  min-width: 180px;
-}
-
-.date-section {
-  margin-bottom: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.date-label {
-  font-size: 12px;
-  margin-bottom: 2px;
-  font-weight: 600;
+.company-sub {
+  font-size: 11px;
+  margin: 0 0 2px 0;
   color: #333;
+  font-weight: 500;
+}
+
+.company-addr {
+  font-size: 9px;
+  margin: 0 0 1px 0;
+  color: #444;
+}
+
+.company-phone {
+  font-size: 9px;
+  margin: 0;
+  color: #444;
+  font-weight: 600;
+}
+
+/* Date Section - Right Side */
+.date-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.date-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 180px;
+  justify-content: flex-end;
+}
+
+.date-item label {
+  font-size: 9px;
+  font-weight: 600;
+  color: #000;
+  white-space: nowrap;
+  min-width: 75px;
+  text-align: right;
 }
 
 .date-input {
-  padding: 3px 6px !important;
-  font-size: 14px !important;
-  height: 28px !important;
-  width: 140px !important;
+  padding: 2px 4px !important;
+  border: none;
+  border-bottom: 1px solid #333;
+  font-size: 9px !important;
+  outline: none;
+  background: transparent;
+  height: 16px !important;
+  width: 95px;
 }
 
-.nepali-date-picker input {
-  padding: 3px 6px !important;
-  font-size: 14px !important;
-  height: 28px !important;
-  width: 140px !important;
+/* Nepali Date Picker adjustments */
+.date-section .nepali-date-picker input,
+.date-section .ndp-input-wrapper input {
+  padding: 2px 4px !important;
+  font-size: 9px !important;
+  height: 16px !important;
+  border: none !important;
+  border-bottom: 1px solid #333 !important;
+  width: 95px !important;
 }
 
-.np-datepicker-container,
-.ndp-input-wrapper {
-  height: 28px !important;
+.date-section .np-datepicker-container,
+.date-section .ndp-input-wrapper {
+  height: 16px !important;
+  width: 95px !important;
 }
 
-/* Buyer Section */
-.buyer-section {
+/* ========== INFO SECTION - CUSTOMER & ADDRESS ON SAME LINE ========== */
+.info-section {
+  margin: 8px 0;
+  font-size: 10px;
+}
+
+.info-row {
   display: flex;
-  gap: 30px;
-  margin-bottom: 25px;
-  padding: 15px 0;
+  gap: 15px;
+  margin-bottom: 4px;
+  align-items: center;
 }
 
-.buyer-field {
+.info-item {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
-.buyer-label {
+.info-item label {
   font-weight: 600;
-  font-size: 14px;
-  min-width: 80px;
-  color: #333;
+  white-space: nowrap;
+  color: #000;
+  min-width: 60px;
 }
 
-.buyer-input {
+.info-input {
   flex: 1;
-  padding: 8px 12px;
+  padding: 2px 4px !important;
   border: none;
   border-bottom: 1px solid #333;
-  font-size: 14px;
+  font-size: 10px !important;
   outline: none;
+  background: transparent;
+  height: 18px !important;
 }
 
-.buyer-input:focus {
-  border-bottom: 2px solid #0066cc;
+.info-input:focus {
+  border-bottom: 1px solid #0066cc;
 }
 
-/* Table */
+/* ========== STOCK WARNING ========== */
+.stock-warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  padding: 6px;
+  margin: 6px 0;
+  font-size: 9px;
+  text-align: center;
+  color: #856404;
+  border-radius: 3px;
+}
+
+/* ========== TABLE ========== */
 .table-wrapper {
-  margin: 25px 0;
+  margin: 8px 0;
+  overflow-x: auto;
 }
 
 .bill-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 9px;
 }
 
 .bill-table thead {
-  background: #f8f9fa;
+  background: #e9ecef;
 }
 
 .bill-table th {
-  padding: 12px 8px;
+  padding: 4px 2px;
   text-align: left;
-  font-weight: 600;
-  border: 1px solid #dee2e6;
-  color: #333;
+  font-weight: 700;
+  border: 1px solid #666;
+  color: #000;
 }
 
 .bill-table td {
-  padding: 10px 8px;
-  border: 1px solid #dee2e6;
+  padding: 4px 2px;
+  border: 1px solid #999;
   vertical-align: middle;
+  word-wrap: break-word;
+  white-space: normal;
 }
 
 .bill-table tbody tr:nth-child(even) {
-  background: #f9f9f9;
+  background: #f8f9fa;
 }
 
-/* Column widths */
-.col-select {
-  width: 50px;
+/* Column specific styling */
+.th-check, .td-check {
+  width: 25px;
   text-align: center;
 }
 
-.col-sno {
-  width: 50px;
+.th-sno, .td-sno {
+  width: 25px;
   text-align: center;
-}
-
-.col-product {
-  width: 180px;
-}
-
-.col-particulars {
-  width: 200px;
-}
-
-.col-qty {
-  width: 80px;
-  text-align: center;
-}
-
-.col-rate {
-  width: 100px;
-  text-align: right;
-}
-
-.col-amount {
-  width: 120px;
-  text-align: right;
   font-weight: 600;
+}
+
+.th-product, .td-product {
+  width: 80px;
+  max-width: 80px;
+}
+
+.th-desc, .td-desc {
+  width: auto;
+  min-width: 80px;
+  max-width: 120px;
+}
+
+.th-qty, .td-qty {
+  width: 35px;
+  text-align: center;
+}
+
+.th-rate, .td-rate {
+  width: 45px;
+  text-align: right;
+}
+
+.th-amount, .td-amount {
+  width: 50px;
+  text-align: right;
+  font-weight: 700;
 }
 
 /* Form inputs in table */
 .product-select {
   width: 100%;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 12px;
+  padding: 2px;
+  border: 1px solid #aaa;
+  border-radius: 2px;
+  font-size: 8px;
+  background: white;
+}
+
+.desc-input {
+  width: 100%;
+  padding: 2px;
+  border: 1px solid #aaa;
+  border-radius: 2px;
+  font-size: 9px;
+  background: white;
+}
+
+.desc-input:focus {
+  outline: none;
+  border-color: #0066cc;
+}
+
+/* Show/hide elements for screen vs print */
+.screen-only {
+  display: inline-block;
+}
+
+.print-only {
+  display: none;
+}
+
+.product-name-print {
+  font-size: 9px;
+  color: #000;
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.3;
 }
 
 .qty-input,
 .rate-input {
   width: 100%;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 13px;
+  padding: 2px;
+  border: 1px solid #aaa;
+  border-radius: 2px;
+  font-size: 9px;
   text-align: center;
+  background: white;
 }
 
 .rate-input {
   text-align: right;
 }
 
-/* Controls Section */
+.qty-input:disabled {
+  background: #f0f0f0;
+  cursor: not-allowed;
+}
+
+/* ========== CONTROLS ========== */
 .controls-section {
   display: flex;
-  gap: 15px;
-  margin: 25px 0;
+  gap: 6px;
+  margin: 10px 0;
   flex-wrap: wrap;
 }
 
 .btn {
-  padding: 10px 20px;
+  padding: 6px 12px;
   border: none;
-  border-radius: 5px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -300,64 +387,385 @@
   background: #5a6268;
 }
 
-/* Summary Section */
-.summary-section {
+/* ========== TOTAL SECTION ========== */
+.total-section {
+  border-top: 2px solid #000;
+  border-bottom: 2px solid #000;
+  padding: 6px 0;
+  margin: 8px 0;
+}
+
+.total-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  margin: 30px 0 20px 0;
-  padding-top: 20px;
-  border-top: 2px solid #333;
+  align-items: center;
+  padding: 0 4px;
 }
 
-.terms-label {
-  font-size: 12px;
-  color: #666;
-}
-
-.grand-total {
-  font-size: 22px;
-  font-weight: bold;
-  color: #1a1a1a;
-  margin: 0;
-}
-
-/* Signature Section */
-.signature-section {
-  text-align: right;
-  margin-top: 60px;
-  padding-top: 20px;
-  margin-right: 50px;
-}
-
-.signature-section p {
-  margin: 5px 0;
+.total-label {
   font-size: 13px;
-  color: #444;
+  font-weight: 700;
+  color: #000;
+}
+
+.total-amount {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+}
+
+/* ========== FOOTER & SIGNATURE (SIGNATURE ABOVE LINE) ========== */
+.bill-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 50px 0 10px 0;
+  padding-top: 15px;
+}
+
+.signature {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+
+.signature-logo {
+  width: 150px;
+  height: auto;
+  max-height: 75px;
+  object-fit: contain;
+  margin: 4px 0 0 0;
+  display: block;
 }
 
 .signature-line {
-  font-weight: 600;
-  padding-top: 40px;
-  border-top: 1px solid #333;
-  display: inline-block;
-  min-width: 200px;
-  margin-top: 10px;
+  border-top: 2px solid #000;
+  width: 130px;
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
-/* PRINT STYLES */
+.signature p {
+  margin: 0;
+  font-size: 10px;
+  color: #000;
+  font-weight: 700;
+}
+
+/* ========== THANK YOU ========== */
+.thank-you {
+  text-align: center;
+  margin-top: 15px;
+  padding-top: 8px;
+  border-top: 1px dashed #999;
+}
+
+.thank-you p {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: #000;
+}
+
+/* ========== PRINT STYLES ========== */
 @media print {
-  nav, .no-print, .col-select, .controls-section, .btn, button, header {
+  /* Hide non-printable elements */
+  .no-print,
+  .controls-section,
+  .btn,
+  button,
+  nav,
+  header,
+  .th-check,
+  .td-check,
+  .screen-only {
     display: none !important;
   }
+
+  /* Show print-only elements */
+  .print-only {
+    display: inline !important;
+  }
+
+  /* Print color adjustment */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  @page { size: A4; margin: 10mm; }
-  body { margin: 0; padding: 0; background: white !important; }
-  .bill-page { background: white !important; padding: 0; margin: 0; min-height: auto; }
-  .bill-sheet { box-shadow: none; padding: 15px; margin: 0; max-width: 100%; page-break-after: avoid; transform: scale(0.95); transform-origin: top center; }
-  .header-left { margin-left: 0; text-align: center; align-items: center; }
-  .company-logo { width: 100px; height: auto; object-fit: contain; display: block; margin-bottom: 8px; }
+
+  /* A5 page setup */
+  @page {
+    size: A5 portrait;
+    margin: 5mm;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+  }
+
+  .bill-page {
+    background: white !important;
+    padding: 0;
+    margin: 0;
+    min-height: auto;
+  }
+
+  .bill-sheet {
+    width: 138mm;
+    min-height: 200mm;
+    box-shadow: none;
+    padding: 5mm;
+    margin: 0;
+    page-break-after: avoid;
+  }
+
+  /* Optimize header for print */
+  .bill-header {
+    padding-bottom: 6px;
+  }
+
+  .company-logo {
+    width: 65px;
+    height: 70px;
+    margin-top: -25px;
+  }
+
+  .company-name {
+    font-size: 15px;
+  }
+
+  .company-sub {
+    font-size: 10px;
+  }
+
+  .company-addr,
+  .company-phone {
+    font-size: 8px;
+  }
+
+  /* Date section on print */
+  .date-section {
+    gap: 2px;
+  }
+
+  .date-item {
+    gap: 2px;
+    min-width: 175px;
+  }
+
+  .date-item label {
+    font-size: 8px;
+    min-width: 70px;
+  }
+
+  .date-input {
+    font-size: 8px !important;
+    height: 15px !important;
+    width: 90px !important;
+    border-bottom: 1px solid #000 !important;
+  }
+
+  /* Info section - keep on same line */
+  .info-row {
+    gap: 10px;
+  }
+
+  .info-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .info-item label {
+    white-space: nowrap;
+    min-width: auto;
+    font-size: 8px;
+  }
+
+  .info-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 8px;
+    flex: 1;
+  }
+
+  /* Optimize table for print */
+  .bill-table {
+    font-size: 8px;
+  }
+
+  .bill-table th {
+    padding: 3px 2px;
+  }
+
+  .bill-table td {
+    padding: 3px 2px;
+    height: auto;
+    min-height: 20px;
+  }
+
+  /* Make product column wider on print to show full names */
+  .th-product, .td-product {
+    width: 100px;
+    max-width: 150px;
+  }
+
+  .product-name-print {
+    display: inline !important;
+    font-size: 8px;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+
+  /* Description field on print */
+  .desc-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 8px;
+  }
+
+  /* Input fields should show values, not borders */
+  .info-input,
+  .qty-input,
+  .rate-input,
+  .date-input {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 8px;
+  }
+
+  /* Remove all borders from Nepali date picker in print */
+  .date-section .nepali-date-picker input,
+  .date-section .ndp-input-wrapper input,
+  .date-section .np-datepicker-container input {
+    border: none !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 8px !important;
+  }
+
+  /* Hide date picker button/icon */
+  .date-section .ndp-input-wrapper button,
+  .date-section .nepali-date-picker button,
+  .date-section button {
+    display: none !important;
+  }
+
+  .date-section .ndp-input-wrapper {
+    border: none !important;
+    background: transparent !important;
+  }
+
+  .date-section .np-datepicker-container {
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Ensure total is prominent */
+  .total-label {
+    font-size: 12px;
+  }
+
+  .total-amount {
+    font-size: 13px;
+  }
+
+  /* Footer & Signature on Print - SIGNATURE ABOVE LINE */
+  .bill-footer {
+    margin: 60px 0 10px 0;
+    padding-top: 20px;
+  }
+
+  .signature {
+    flex-direction: column-reverse;
+  }
+
+  .signature-logo {
+    width: 125px;
+    max-height: 65px;
+    margin: 4px 0 0 0;
+    display: block;
+  }
+
+  .signature-line {
+    width: 120px;
+    border-top: 2px solid #000;
+    margin-bottom: 0;
+    margin-top: 0;
+  }
+
+  .signature p {
+    font-size: 9px;
+    margin: 0;
+  }
+
+  .thank-you {
+    margin-top: 20px;
+  }
+
+  .thank-you p {
+    font-size: 9px;
+  }
+}
+
+/* ========== RESPONSIVE ADJUSTMENTS ========== */
+@media screen and (max-width: 768px) {
+  .bill-sheet {
+    width: 100%;
+    min-height: auto;
+    padding: 10px;
+  }
+
+  .bill-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .company-logo {
+    margin: 0;
+  }
+
+  .header-text {
+    padding: 0;
+  }
+
+  .date-section {
+    align-items: center;
+  }
+
+  /* Stack customer and address on mobile */
+  .info-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .info-item {
+    width: 100%;
+  }
+
+  .bill-table {
+    font-size: 8px;
+  }
+
+  .controls-section {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .signature-logo {
+    width: 110px;
+  }
 }

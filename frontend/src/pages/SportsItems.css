@@ -1,28 +1,70 @@
+/* Main Container */
 .sports-container {
   width: 90%;
   margin: auto;
   padding: 1px;
 }
 
+/* Add Item Section */
 .add-item-section {
-  margin-bottom: 20px;
+  background: #f4f4f4;
+  border-radius: 12px;
+  padding: 35px;
+  margin-bottom: 35px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   display: flex;
-  gap: 10px;
-  padding: 50px;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: flex-end;
 }
 
 .add-item-section input {
-  padding: 8px;
-  border: 1px solid #ccc;
+  flex: 1;
+  min-width: 180px;
+  padding: 12px 16px;
+  border: 2px solid #e0e4e8;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.add-item-section input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  background-color: #f8fafb;
+}
+
+.add-item-section input::placeholder {
+  color: #999;
+  font-weight: 500;
 }
 
 .add-item-section button {
-  padding: 8px 14px;
-  background: #007bff;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   color: white;
   border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  white-space: nowrap;
 }
+
+.add-item-section button:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.add-item-section button:active {
+  transform: translateY(0);
+}
+
 
 .sports-table {
   width: 100%;
@@ -80,3 +122,6 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
+
+

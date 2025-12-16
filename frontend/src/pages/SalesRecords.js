@@ -21,25 +21,58 @@ function SalesRecords() {
   const [showCustomRange, setShowCustomRange] = useState(false);
 
   // date range states (custom range)
-  const [startMonth, setStartMonth] = useState("");
-  const [startYear, setStartYear] = useState("");
-  const [endMonth, setEndMonth] = useState("");
-  const [endYear, setEndYear] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const itemsPerPage = 10;
 
   /* ------------------------------------
-     Fetch Orders (unfiltered)
+     Helper: Calculate date ranges
   ------------------------------------ */
-  useEffect(() => {
-    fetchOrders();
-    // eslint-disable-next-line
-  }, []);
+  const getDateRange = (type) => {
+    const today = new Date();
+    let startDate, endDate;
 
-  const fetchOrders = async () => {
+    if (type === "daily") {
+      // Today only - same date for start and end
+      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === "weekly") {
+      // Last 7 days (6 days before + today)
+      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+      endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === "monthly") {
+      // Last 30 days (29 days before + today)
+      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
+      endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    }
+
+    return { startDate, endDate };
+  };
+
+  const formatDateForAPI = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  /* ------------------------------------
+     Fetch Orders with date filtering
+  ------------------------------------ */
+  const fetchOrders = async (type = null) => {
     try {
       setLoading(true);
-      const response = await fetchWithAuth("/api/orders/");
+      let url = "/api/orders/";
+
+      if (type && (type === "daily" || type === "weekly" || type === "monthly")) {
+        const { startDate, endDate } = getDateRange(type);
+        const startStr = formatDateForAPI(startDate);
+        const endStr = formatDateForAPI(endDate);
+        url = `/api/orders/?start=${encodeURIComponent(startStr)}&end=${encodeURIComponent(endStr)}`;
+      }
+
+      const response = await fetchWithAuth(url);
       if (response.ok) {
         const data = await response.json();
         setOrders(Array.isArray(data) ? data : data.records || []);
@@ -54,19 +87,46 @@ function SalesRecords() {
   };
 
   /* ------------------------------------
-     Apply date filter
+     Initial load with monthly filter
+  ------------------------------------ */
+  useEffect(() => {
+    fetchOrders("monthly");
+    // eslint-disable-next-line
+  }, []);
+
+  /* ------------------------------------
+     Handle filter type change
+  ------------------------------------ */
+  const handleFilterChange = (type) => {
+    setFilterType(type);
+    setShowCustomRange(false);
+    setCurrentPage(1);
+    setStartDate("");
+    setEndDate("");
+    fetchOrders(type);
+  };
+
+  /* ------------------------------------
+     Apply custom date range filter
   ------------------------------------ */
   const applyDateFilter = async () => {
-    if (!startYear || !startMonth || !endYear || !endMonth) return;
+    if (!startDate || !endDate) {
+      alert("Please select both start and end dates");
+      return;
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (start > end) {
+      alert("Start date cannot be after end date");
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const startStr = `${startYear}-${startMonth}-01`;
-      const endDay = new Date(parseInt(endYear, 10), parseInt(endMonth, 10), 0).getDate();
-      const endStr = `${endYear}-${endMonth}-${String(endDay).padStart(2, "0")}`;
-
-      const url = `/api/orders/?start=${encodeURIComponent(startStr)}&end=${encodeURIComponent(endStr)}`;
+      const url = `/api/orders/?start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`;
 
       const response = await fetchWithAuth(url);
       if (response.ok) {
@@ -74,7 +134,7 @@ function SalesRecords() {
         setOrders(Array.isArray(data) ? data : data.records || []);
         setCurrentPage(1);
         setShowCustomRange(true);
-        setFilterType("");
+        setFilterType("custom");
       } else {
         console.error("Failed to fetch filtered orders");
       }
@@ -86,25 +146,57 @@ function SalesRecords() {
   };
 
   /* ------------------------------------
-     Clear date filter
+     Clear date filter and reset to monthly
   ------------------------------------ */
   const clearDateFilter = async () => {
-    setStartMonth("");
-    setStartYear("");
-    setEndMonth("");
-    setEndYear("");
+    setStartDate("");
+    setEndDate("");
     setShowCustomRange(false);
     setFilterType("monthly");
     setCurrentPage(1);
-    await fetchOrders();
+    await fetchOrders("monthly");
   };
 
   /* ------------------------------------
-     Flatten Records
+     Flatten Records with client-side date filtering
   ------------------------------------ */
   const salesRecords = useMemo(() => {
     const records = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     orders.forEach((order) => {
+      if (!order.date) return;
+      
+      const orderDate = new Date(order.date);
+      orderDate.setHours(0, 0, 0, 0);
+      let shouldInclude = true;
+      
+      // Client-side date filtering for extra safety
+      if (filterType === "daily") {
+        const todayStr = formatDateForAPI(today);
+        const orderDateStr = order.date.split('T')[0];
+        shouldInclude = (orderDateStr === todayStr);
+      } else if (filterType === "weekly") {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 6);
+        weekAgo.setHours(0, 0, 0, 0);
+        shouldInclude = (orderDate >= weekAgo && orderDate <= today);
+      } else if (filterType === "monthly") {
+        const monthAgo = new Date(today);
+        monthAgo.setDate(today.getDate() - 29);
+        monthAgo.setHours(0, 0, 0, 0);
+        shouldInclude = (orderDate >= monthAgo && orderDate <= today);
+      } else if (filterType === "custom" && startDate && endDate) {
+        const customStart = new Date(startDate);
+        customStart.setHours(0, 0, 0, 0);
+        const customEnd = new Date(endDate);
+        customEnd.setHours(23, 59, 59, 999);
+        shouldInclude = (orderDate >= customStart && orderDate <= customEnd);
+      }
+      
+      if (!shouldInclude) return;
+      
       const items = order.items || order.order_items || [];
       items.forEach((item) => {
         records.push({
@@ -119,33 +211,14 @@ function SalesRecords() {
       });
     });
     return records;
-  }, [orders]);
+  }, [orders, filterType, startDate, endDate]);
 
   /* ------------------------------------
-     Client-side fallback filter
-  ------------------------------------ */
-  const filteredRecords = useMemo(() => {
-    if (!startYear || !startMonth || !endYear || !endMonth) {
-      return salesRecords;
-    }
-
-    const startDate = new Date(parseInt(startYear, 10), parseInt(startMonth, 10) - 1, 1);
-    const endDay = new Date(parseInt(endYear, 10), parseInt(endMonth, 10), 0).getDate();
-    const endDate = new Date(parseInt(endYear, 10), parseInt(endMonth, 10) - 1, endDay);
-
-    return salesRecords.filter((record) => {
-      if (!record.date) return false;
-      const recDate = new Date(record.date);
-      return recDate >= startDate && recDate <= endDate;
-    });
-  }, [salesRecords, startYear, startMonth, endYear, endMonth]);
-
-  /* ------------------------------------
-     Aggregation
+     Aggregation for chart
   ------------------------------------ */
   const aggregatedData = useMemo(() => {
     const grouped = {};
-    const source = filteredRecords;
+    const source = salesRecords;
 
     source.forEach((record) => {
       if (!record.date) return;
@@ -155,11 +228,9 @@ function SalesRecords() {
       if (filterType === "daily") {
         key = date.toISOString().slice(0, 10);
       } else if (filterType === "weekly") {
-        const weekStart = new Date(date);
-        weekStart.setDate(date.getDate() - date.getDay());
-        key = `Week of ${weekStart.toISOString().slice(0, 10)}`;
+        key = date.toISOString().slice(0, 10);
       } else {
-        key = date.toISOString().slice(0, 7);
+        key = date.toISOString().slice(0, 10);
       }
 
       if (!grouped[key]) grouped[key] = { period: key, total: 0 };
@@ -167,34 +238,34 @@ function SalesRecords() {
     });
 
     return Object.values(grouped).sort((a, b) => new Date(a.period) - new Date(b.period));
-  }, [filteredRecords, filterType]);
+  }, [salesRecords, filterType]);
 
   /* ------------------------------------
      Metrics
   ------------------------------------ */
   const metrics = useMemo(() => {
-    const totalSales = filteredRecords.reduce((sum, r) => sum + (Number(r.total) || 0), 0);
-    const uniqueOrders = new Set(filteredRecords.map((r) => r.orderId));
+    const totalSales = salesRecords.reduce((sum, r) => sum + (Number(r.total) || 0), 0);
+    const uniqueOrders = new Set(salesRecords.map((r) => r.orderId));
     const totalOrders = uniqueOrders.size;
     const avgOrder = totalOrders > 0 ? (totalSales / totalOrders).toFixed(2) : "0.00";
-    const totalQuantity = filteredRecords.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+    const totalQuantity = salesRecords.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
 
     return { totalSales, totalOrders, avgOrder, totalQuantity };
-  }, [filteredRecords]);
+  }, [salesRecords]);
 
   /* ------------------------------------
      Pagination
   ------------------------------------ */
   const sortedRecords = useMemo(() => {
-    return [...filteredRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [filteredRecords]);
+    return [...salesRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [salesRecords]);
 
   const paginatedRecords = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return sortedRecords.slice(start, start + itemsPerPage);
   }, [currentPage, sortedRecords]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(salesRecords.length / itemsPerPage));
 
   /* ------------------------------------
      Delete Order
@@ -208,10 +279,10 @@ function SalesRecords() {
       });
 
       if (response.ok) {
-        if (startYear && startMonth && endYear && endMonth) {
+        if (filterType === "custom") {
           await applyDateFilter();
         } else {
-          await fetchOrders();
+          await fetchOrders(filterType);
         }
       } else {
         alert("Failed to delete order");
@@ -223,26 +294,30 @@ function SalesRecords() {
   };
 
   /* ------------------------------------
+     Get filter display text
+  ------------------------------------ */
+  const getFilterDisplayText = () => {
+    if (filterType === "daily") {
+      return "Today's Sales";
+    } else if (filterType === "weekly") {
+      return "Last 7 Days";
+    } else if (filterType === "monthly") {
+      return "Last 30 Days";
+    } else if (filterType === "custom" && startDate && endDate) {
+      return `${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`;
+    }
+    return "";
+  };
+
+  /* ------------------------------------
      Date select options
   ------------------------------------ */
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
-  const months = [
-    { value: "01", label: "January" },
-    { value: "02", label: "February" },
-    { value: "03", label: "March" },
-    { value: "04", label: "April" },
-    { value: "05", label: "May" },
-    { value: "06", label: "June" },
-    { value: "07", label: "July" },
-    { value: "08", label: "August" },
-    { value: "09", label: "September" },
-    { value: "10", label: "October" },
-    { value: "11", label: "November" },
-    { value: "12", label: "December" }
-  ];
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
 
-  const isDateFilterActive = startYear && startMonth && endYear && endMonth;
+  const isDateFilterActive = startDate && endDate;
 
   if (loading) {
     return (
@@ -256,132 +331,119 @@ function SalesRecords() {
     <div className="sales-container">
       <h2 className="sales-title">Sales Records Dashboard</h2>
 
-      <button className="sales-btn" onClick={() => { setFilterType("monthly"); setShowCustomRange(false); fetchOrders(); }}>
+      <button className="sales-btn" onClick={() => handleFilterChange("monthly")}>
         🔄 Refresh Data
       </button>
 
-      {salesRecords.length === 0 ? (
-        <div className="empty-state">
-          <p>No sales records yet. Create an order to get started!</p>
-        </div>
-      ) : (
-        <>
-          {/* FILTERS */}
-          <div className="filter-section">
-            <h3>Filter By:</h3>
+      {/* FILTERS */}
+      <div className="filter-section">
+        <h3>Filter By:</h3>
 
-            <div className="filter-buttons">
-              {["daily", "weekly", "monthly"].map((type) => (
-                <button
-                  key={type}
-                  className={`filter-btn ${filterType === type ? "active" : ""}`}
-                  onClick={() => {
-                    setFilterType(type);
-                    setShowCustomRange(false);
-                    setCurrentPage(1);
-                  }}
-                >
-                  {type.toUpperCase()}
-                </button>
-              ))}
+        <div className="filter-buttons">
+          {["daily", "weekly", "monthly"].map((type) => (
+            <button
+              key={type}
+              className={`filter-btn ${filterType === type ? "active" : ""}`}
+              onClick={() => handleFilterChange(type)}
+            >
+              {type === "daily" ? "TODAY" : type === "weekly" ? "LAST 7 DAYS" : "LAST 30 DAYS"}
+            </button>
+          ))}
+
+          <button
+            className={`filter-btn ${showCustomRange ? "active" : ""}`}
+            onClick={() => {
+              setShowCustomRange((v) => !v);
+              if (!showCustomRange) {
+                setFilterType("custom");
+              }
+            }}
+          >
+            CUSTOM RANGE
+          </button>
+        </div>
+
+        {showCustomRange && (
+          <div className="custom-range-box">
+            <h4>📅 Select Date Range</h4>
+
+            <div className="custom-range-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="date-input-group">
+                <label htmlFor="start-date" style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                  Start Date (YYYY-MM-DD)
+                </label>
+                <input
+                  id="start-date"
+                  type="date"
+                  className="sales-input date-input"
+                  value={startDate}
+                  max={getTodayDate()}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  placeholder="YYYY-MM-DD"
+                  style={{ width: '100%', padding: '10px', fontSize: '14px' }}
+                />
+              </div>
+
+              <div className="date-input-group">
+                <label htmlFor="end-date" style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                  End Date (YYYY-MM-DD)
+                </label>
+                <input
+                  id="end-date"
+                  type="date"
+                  className="sales-input date-input"
+                  value={endDate}
+                  max={getTodayDate()}
+                  min={startDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  placeholder="YYYY-MM-DD"
+                  style={{ width: '100%', padding: '10px', fontSize: '14px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: '15px', padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', fontSize: '13px', color: '#0369a1' }}>
+              💡 <strong>Tip:</strong> Click on the calendar icon to select a date, or type manually in YYYY-MM-DD format (e.g., 2025-11-01)
+            </div>
+
+            <div className="custom-range-actions">
+              <button
+                className="sales-btn"
+                onClick={applyDateFilter}
+                disabled={!isDateFilterActive}
+              >
+                Apply Filter
+              </button>
 
               <button
-                className={`filter-btn ${showCustomRange ? "active" : ""}`}
-                onClick={() => {
-                  setShowCustomRange((v) => !v);
-                  setFilterType("");
-                }}
+                className="clear-btn"
+                onClick={clearDateFilter}
               >
-                CUSTOM RANGE
+                Clear Filter
               </button>
             </div>
 
-            {showCustomRange && (
-              <div className="custom-range-box">
-                <h4>📅 Select Date Range</h4>
-
-                <div className="custom-range-grid">
-                  <select
-                    className="sales-input"
-                    value={startMonth}
-                    onChange={(e) => setStartMonth(e.target.value)}
-                  >
-                    <option value="">Start Month</option>
-                    {months.map((m) => (
-                      <option key={m.value} value={m.value}>
-                        {m.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    className="sales-input"
-                    value={startYear}
-                    onChange={(e) => setStartYear(e.target.value)}
-                  >
-                    <option value="">Start Year</option>
-                    {years.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    className="sales-input"
-                    value={endMonth}
-                    onChange={(e) => setEndMonth(e.target.value)}
-                  >
-                    <option value="">End Month</option>
-                    {months.map((m) => (
-                      <option key={m.value} value={m.value}>
-                        {m.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    className="sales-input"
-                    value={endYear}
-                    onChange={(e) => setEndYear(e.target.value)}
-                  >
-                    <option value="">End Year</option>
-                    {years.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="custom-range-actions">
-                  <button
-                    className="sales-btn"
-                    onClick={applyDateFilter}
-                    disabled={!isDateFilterActive}
-                  >
-                    Apply
-                  </button>
-
-                  <button
-                    className="clear-btn"
-                    onClick={clearDateFilter}
-                  >
-                    Clear
-                  </button>
-                </div>
-
-                {isDateFilterActive && (
-                  <div className="date-range-info">
-                    📊 Showing data from{" "}
-                    {months[parseInt(startMonth, 10) - 1]?.label} {startYear} to{" "}
-                    {months[parseInt(endMonth, 10) - 1]?.label} {endYear}
-                  </div>
-                )}
+            {isDateFilterActive && (
+              <div className="date-range-info">
+                📊 Selected range: {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}
               </div>
             )}
           </div>
+        )}
 
+        {filterType && (
+          <div className="date-range-info">
+            📊 Showing: {getFilterDisplayText()}
+          </div>
+        )}
+      </div>
+
+      {salesRecords.length === 0 ? (
+        <div className="empty-state">
+          <p>No sales records found for the selected period.</p>
+        </div>
+      ) : (
+        <>
           {/* METRICS */}
           <div className="metrics-section">
             <div className="metric-card">
@@ -447,8 +509,8 @@ function SalesRecords() {
                       <td>{record.customer}</td>
                       <td><strong>{record.product}</strong></td>
                       <td>{record.quantity}</td>
-                      <td>Rs.{record.price.toFixed(2)}</td>
-                      <td><strong>Rs.{record.total.toFixed(2)}</strong></td>
+                      <td>Rs.{record.price}</td>
+                      <td><strong>Rs.{record.total}</strong></td>
                       <td>
                         <button className="delete-btn" onClick={() => deleteOrder(record.orderId)}>
                           Delete
@@ -471,7 +533,7 @@ function SalesRecords() {
               </button>
 
               <span className="pagination-info">
-                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredRecords.length)} - {Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length} records
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, salesRecords.length)} - {Math.min(currentPage * itemsPerPage, salesRecords.length)} of {salesRecords.length} records
               </span>
 
               <button

@@ -52,3 +52,6 @@ desktop.ini
 # =========================
 *.pyc
 */__pycache__/
+
+
+backend/staticfiles/
