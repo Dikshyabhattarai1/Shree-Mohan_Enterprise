@@ -98,16 +98,23 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # --------------------------
 # DATABASE
 # --------------------------
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Mohanenterprises',  # must match DB you just created
-        'USER': 'store_user',        # or 'postgres'
-        'PASSWORD': 'strongpassword',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
+
 
 
 # --------------------------
