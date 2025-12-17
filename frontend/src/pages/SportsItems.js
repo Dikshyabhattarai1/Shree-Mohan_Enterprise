@@ -1,5 +1,4 @@
 import React, { useContext, useState } from "react";
-import "./SportsItems.css";
 import { AppContext } from "./AppContext";
 
 function SportsItems() {
@@ -11,10 +10,13 @@ function SportsItems() {
   const [loading, setLoading] = useState(false);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
   const [popup, setPopup] = useState({
-          show: false,
-        message: "",
-       });
-
+    show: false,
+    message: "",
+  });
+  
+  // State for editing stock
+  const [editingId, setEditingId] = useState(null);
+  const [editStock, setEditStock] = useState("");
 
   // Sort products alphabetically by name
   const sortedProducts = [...products].sort((a, b) =>
@@ -33,14 +35,12 @@ function SportsItems() {
       return;
     }
 
-    // Only letters & spaces for name
     const nameRegex = /^[a-zA-Z\s]+$/;
     if (!nameRegex.test(newItemName)) {
       alert("Item name should only contain letters and spaces");
       return;
     }
 
-    // Validation: prevent negative stock/price
     if (Number(newItemStock) < 0) {
       alert("Stock cannot be negative");
       return;
@@ -52,10 +52,8 @@ function SportsItems() {
 
     setLoading(true);
     
-    // 🔵 DEBUG: Check token
     const token = localStorage.getItem('access_token');
     console.log("🔵 Token in localStorage:", token ? "✅ EXISTS" : "❌ MISSING");
-    console.log("🔵 Token value:", token);
     
     try {
       const payload = {
@@ -66,36 +64,68 @@ function SportsItems() {
         image: ""
       };
       
-      console.log("🔵 Sending payload:", payload);
-      
       const response = await fetchWithAuth('/api/products/', {
         method: 'POST',
         body: JSON.stringify(payload)
       });
 
-      console.log("🔵 Response status:", response.status);
-      console.log("🔵 Response ok:", response.ok);
-
       if (response.ok) {
-        console.log("✅ Item added successfully!");
         setNewItemName("");
         setNewItemStock("");
         setNewItemPrice("");
         setNewItemDescription("");
-        await fetchProducts(); // Fetch updated products
+        await fetchProducts();
         setPopup({
-       show: true,
-       message: "✅ वस्तु सफलतापूर्वक थपियो",
-});
-
+          show: true,
+          message: " वस्तु सफलतापूर्वक थपियो",
+        });
       } else {
         const err = await response.json();
-        console.log("❌ Error response:", err);
         alert("Error adding item: " + JSON.stringify(err));
       }
     } catch (error) {
-      console.error("❌ Error adding item:", error);
+      console.error("Error adding item:", error);
       alert("Failed to add item: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update Stock
+  const updateStock = async (id) => {
+    if (editStock === "" || Number(editStock) < 0) {
+      alert("Please enter a valid stock quantity");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const product = products.find(p => p.id === id);
+      const payload = {
+        ...product,
+        stock: Number(editStock)
+      };
+
+      const response = await fetchWithAuth(`/api/products/${id}/`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        await fetchProducts();
+        setEditingId(null);
+        setEditStock("");
+        setPopup({
+          show: true,
+          message: " स्टक अपडेट भयो ",
+        });
+      } else {
+        const err = await response.json();
+        alert("Error updating stock: " + JSON.stringify(err));
+      }
+    } catch (error) {
+      console.error("Error updating stock:", error);
+      alert("Failed to update stock: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -127,24 +157,69 @@ function SportsItems() {
     }
   };
 
-  return (
-    <div className="sports-container">
-      <h2>Sports Items List</h2>
-      {popup.show && (
-  <div className="popup-overlay">
-    <div className="popup-box">
-      <h3>Notification</h3>
-      <p>{popup.message}</p>
-      <button onClick={() => setPopup({ show: false, message: "" })}>
-        OK
-      </button>
-    </div>
-  </div>
-)}
+  const startEditing = (id, currentStock) => {
+    setEditingId(id);
+    setEditStock(currentStock.toString());
+  };
 
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditStock("");
+  };
+
+  return (
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <h2 style={{ marginBottom: '20px' }}>Sports Items List</h2>
+      
+      {popup.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '8px',
+            maxWidth: '400px',
+            textAlign: 'center'
+          }}>
+            <h3>Notification</h3>
+            <p>{popup.message}</p>
+            <button 
+              onClick={() => setPopup({ show: false, message: "" })}
+              style={{
+                padding: '8px 20px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add Item Section */}
-      <div className="add-item-section">
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '10px',
+        marginBottom: '20px',
+        padding: '20px',
+        backgroundColor: '#f9fafb',
+        borderRadius: '8px'
+      }}>
         <input
           type="text"
           placeholder="Item name"
@@ -152,6 +227,7 @@ function SportsItems() {
           onChange={(e) => setNewItemName(e.target.value)}
           disabled={loading}
           pattern="[a-zA-Z\s]+"
+          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #d1d5db' }}
         />
 
         <input
@@ -160,10 +236,11 @@ function SportsItems() {
           value={newItemStock}
           min="0"
           onChange={(e) => {
-            if (Number(e.target.value) < 0) return; // Prevent negative typing
+            if (Number(e.target.value) < 0) return;
             setNewItemStock(e.target.value);
           }}
           disabled={loading}
+          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #d1d5db' }}
         />
 
         <input
@@ -176,6 +253,7 @@ function SportsItems() {
             setNewItemPrice(e.target.value);
           }}
           disabled={loading}
+          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #d1d5db' }}
         />
 
         <input
@@ -184,9 +262,21 @@ function SportsItems() {
           value={newItemDescription}
           onChange={(e) => setNewItemDescription(e.target.value)}
           disabled={loading}
+          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #d1d5db' }}
         />
 
-        <button onClick={addItem} disabled={loading}>
+        <button 
+          onClick={addItem} 
+          disabled={loading}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: loading ? '#9ca3af' : '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
+        >
           {loading ? "Adding..." : "Add Item"}
         </button>
       </div>
@@ -238,22 +328,29 @@ function SportsItems() {
       )}
 
       {/* Table */}
-      <table className="sports-table">
+      <table style={{
+        width: '100%',
+        borderCollapse: 'collapse',
+        backgroundColor: 'white',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        borderRadius: '8px',
+        overflow: 'hidden'
+      }}>
         <thead>
-          <tr>
-            <th>S.N</th>
-            <th>Item Name</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Description</th>
-            <th>Actions</th>
+          <tr style={{ backgroundColor: '#f3f4f6' }}>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>S.N</th>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Item Name</th>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Price</th>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Stock</th>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Description</th>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Actions</th>
           </tr>
         </thead>
 
         <tbody>
           {displayProducts.length === 0 ? (
             <tr>
-              <td colSpan="6">
+              <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
                 {showOutOfStock
                   ? "No products found."
                   : "No products in stock. Enable 'Show out of stock items'."}
@@ -265,11 +362,12 @@ function SportsItems() {
                 key={item.id}
                 style={{
                   backgroundColor: item.stock === 0 ? '#fee2e2' : 'transparent',
-                  opacity: item.stock === 0 ? 0.7 : 1
+                  opacity: item.stock === 0 ? 0.7 : 1,
+                  borderBottom: '1px solid #e5e7eb'
                 }}
               >
-                <td>{index + 1}</td>
-                <td>
+                <td style={{ padding: '12px' }}>{index + 1}</td>
+                <td style={{ padding: '12px' }}>
                   {item.name}
                   {item.stock === 0 && (
                     <span style={{
@@ -284,17 +382,99 @@ function SportsItems() {
                     </span>
                   )}
                 </td>
-                <td>Rs. {item.price}</td>
-                <td>{item.stock}</td>
-                <td>{item.description || "-"}</td>
-                <td>
-                  <button
-                    onClick={() => deleteItem(item.id)}
-                    className="delete-btn"
-                    disabled={loading}
-                  >
-                    Delete
-                  </button>
+                <td style={{ padding: '12px' }}>Rs. {item.price}</td>
+                <td style={{ padding: '12px' }}>
+                  {editingId === item.id ? (
+                    <input
+                      type="number"
+                      value={editStock}
+                      min="0"
+                      onChange={(e) => {
+                        if (Number(e.target.value) < 0) return;
+                        setEditStock(e.target.value);
+                      }}
+                      style={{
+                        width: '80px',
+                        padding: '4px 8px',
+                        border: '2px solid #3b82f6',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  ) : (
+                    item.stock
+                  )}
+                </td>
+                <td style={{ padding: '12px' }}>{item.description || "-"}</td>
+                <td style={{ padding: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {editingId === item.id ? (
+                      <>
+                        <button
+                          onClick={() => updateStock(item.id)}
+                          disabled={loading}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEditing}
+                          disabled={loading}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#6b7280',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEditing(item.id, item.stock)}
+                          disabled={loading}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          Restock
+                        </button>
+                        <button
+                          onClick={() => deleteItem(item.id)}
+                          disabled={loading}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))
