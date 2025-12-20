@@ -531,8 +531,7 @@ function SalesRecords() {
               >
                 ← Previous
               </button>
-
-              <span className="pagination-info">
+                <span className="pagination-info">
                 Showing {Math.min((currentPage - 1) * itemsPerPage + 1, salesRecords.length)} - {Math.min(currentPage * itemsPerPage, salesRecords.length)} of {salesRecords.length} records
               </span>
 

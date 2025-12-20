@@ -1,9 +1,10 @@
 """
-Django settings for backend project.
+Django settings for backend project (refactored for .env usage).
 """
 
 from pathlib import Path
 from datetime import timedelta
+from decouple import config, Csv
 
 # --------------------------
 # BASE DIRECTORY
@@ -13,8 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------
 # SECRET KEY / DEBUG
 # --------------------------
-SECRET_KEY = 'django-insecure-+()hat!yr10-8_-dk3g8_^p*$lll3)4zv4(e5m+#qa55y&92pz'
-DEBUG = True
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = ["*"]
 
 # --------------------------
@@ -58,8 +59,8 @@ MIDDLEWARE = [
 # --------------------------
 # CORS
 # --------------------------
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
+CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=False, cast=bool)
 
 # --------------------------
 # REST FRAMEWORK
@@ -79,8 +80,8 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-    BASE_DIR.parent / "frontend" / "build"
-               ],
+            BASE_DIR.parent / "frontend" / "build"
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -98,24 +99,16 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # --------------------------
 # DATABASE
 # --------------------------
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv()
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default=5432, cast=int),
     }
 }
-
-
 
 # --------------------------
 # PASSWORD VALIDATION
@@ -144,10 +137,7 @@ STATICFILES_DIRS = [
     BASE_DIR.parent / "frontend" / "build" / "static",
 ]
 
-
-
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --------------------------
@@ -165,7 +155,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # JWT SETTINGS
 # --------------------------
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=config('ACCESS_TOKEN_LIFETIME_HOURS', default=24, cast=int)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=config('REFRESH_TOKEN_LIFETIME_DAYS', default=7, cast=int)),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
