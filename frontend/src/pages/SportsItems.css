@@ -65,31 +65,108 @@
   transform: translateY(0);
 }
 
-
+/* Table Styling - COMPREHENSIVE FIX */
 .sports-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
+  table-layout: auto;
 }
 
-.sports-table th,
-.sports-table td {
-  border: 1px solid #ddd;
-  padding: 10px;
+/* Header cells - strong centering */
+.sports-table thead th {
+  border: 1px solid #ddd !important;
+  padding: 12px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  background: #f4f4f4 !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
 }
 
 .sports-table th {
+  border: 1px solid #ddd !important;
+  padding: 12px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
   background: #f4f4f4;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
 }
 
-.delete-btn {
-  background: red;
+/* Data cells - strong centering */
+.sports-table tbody td {
+  border: 1px solid #ddd !important;
+  padding: 12px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  font-size: 14px;
+}
+
+.sports-table td {
+  border: 1px solid #ddd !important;
+  padding: 12px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  font-size: 14px;
+}
+
+/* Hover effect for rows */
+.sports-table tbody tr:hover {
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease;
+}
+
+/* Delete button styling */
+.delete-btn,
+.sports-table .delete-btn,
+.sports-table td .delete-btn {
+  background: #dc3545;
   color: white;
-  padding: 6px 10px;
+  padding: 8px 16px;
   border: none;
   cursor: pointer;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  display: inline-block;
+  margin: 0 auto;
 }
 
+.delete-btn:hover,
+.sports-table .delete-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Restock button if exists */
+.restock-btn,
+.sports-table .restock-btn {
+  background: #007bff;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  display: inline-block;
+  margin: 0 4px;
+}
+
+.restock-btn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+/* Popup Overlay */
 .popup-overlay {
   position: fixed;
   inset: 0;
@@ -106,22 +183,27 @@
   border-radius: 8px;
   width: 300px;
   text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .popup-box h3 {
   color: #16a34a;
   margin-bottom: 10px;
+  font-size: 18px;
 }
 
 .popup-box button {
   margin-top: 15px;
-  padding: 6px 16px;
+  padding: 8px 20px;
   background: #16a34a;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
-
-
+.popup-box button:hover {
+  background: #15803d;
+}

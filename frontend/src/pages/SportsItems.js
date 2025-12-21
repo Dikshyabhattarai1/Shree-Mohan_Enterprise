@@ -327,7 +327,7 @@ function SportsItems() {
         </div>
       )}
 
-      {/* Table */}
+      {/* Table - FIXED ALIGNMENT */}
       <table style={{
         width: '100%',
         borderCollapse: 'collapse',
@@ -338,12 +338,12 @@ function SportsItems() {
       }}>
         <thead>
           <tr style={{ backgroundColor: '#f3f4f6' }}>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>S.N</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Item Name</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Price</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Stock</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Description</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Actions</th>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #e5e7eb' }}>S.N</th>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #e5e7eb' }}>Item Name</th>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #e5e7eb' }}>Price</th>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #e5e7eb' }}>Stock</th>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #e5e7eb' }}>Description</th>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #e5e7eb' }}>Actions</th>
           </tr>
         </thead>
 
@@ -366,8 +366,8 @@ function SportsItems() {
                   borderBottom: '1px solid #e5e7eb'
                 }}
               >
-                <td style={{ padding: '12px' }}>{index + 1}</td>
-                <td style={{ padding: '12px' }}>
+                <td style={{ padding: '12px', textAlign: 'center' }}>{index + 1}</td>
+                <td style={{ padding: '12px', textAlign: 'center' }}>
                   {item.name}
                   {item.stock === 0 && (
                     <span style={{
@@ -382,8 +382,8 @@ function SportsItems() {
                     </span>
                   )}
                 </td>
-                <td style={{ padding: '12px' }}>Rs. {item.price}</td>
-                <td style={{ padding: '12px' }}>
+                <td style={{ padding: '12px', textAlign: 'center' }}>Rs. {item.price}</td>
+                <td style={{ padding: '12px', textAlign: 'center' }}>
                   {editingId === item.id ? (
                     <input
                       type="number"
@@ -397,16 +397,17 @@ function SportsItems() {
                         width: '80px',
                         padding: '4px 8px',
                         border: '2px solid #3b82f6',
-                        borderRadius: '4px'
+                        borderRadius: '4px',
+                        textAlign: 'center'
                       }}
                     />
                   ) : (
                     item.stock
                   )}
                 </td>
-                <td style={{ padding: '12px' }}>{item.description || "-"}</td>
-                <td style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                <td style={{ padding: '12px', textAlign: 'center' }}>{item.description || "-"}</td>
+                <td style={{ padding: '12px', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     {editingId === item.id ? (
                       <>
                         <button
