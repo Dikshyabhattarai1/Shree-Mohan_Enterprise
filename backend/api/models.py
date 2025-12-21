@@ -8,6 +8,7 @@ class Product(models.Model):
     price = models.FloatField(default=0.0)
     description = models.TextField(blank=True)
     stock = models.IntegerField(default=0)
+   
 
     def __str__(self):
         return self.name
