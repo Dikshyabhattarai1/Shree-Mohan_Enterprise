@@ -177,10 +177,7 @@ export default function Bill() {
 
   const handlePrint = () => {
     const now = new Date();
-    const timeString = now.toLocaleString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
+    const timeString = now.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
