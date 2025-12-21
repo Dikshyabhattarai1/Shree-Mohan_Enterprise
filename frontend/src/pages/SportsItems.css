@@ -1,325 +1,209 @@
 /* Main Container */
 .sports-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.sports-title {
-  margin-bottom: 20px;
-  font-size: 24px;
-  font-weight: bold;
+  width: 90%;
+  margin: auto;
+  padding: 1px;
 }
 
 /* Add Item Section */
 .add-item-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 20px;
-  background-color: #f9fafb;
-  border-radius: 8px;
+  background: #f4f4f4;
+  border-radius: 12px;
+  padding: 35px;
+  margin-bottom: 35px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: flex-end;
 }
 
 .add-item-section input {
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #d1d5db;
+  flex: 1;
+  min-width: 180px;
+  padding: 12px 16px;
+  border: 2px solid #e0e4e8;
+  border-radius: 8px;
   font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .add-item-section input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  background-color: #f8fafb;
+}
+
+.add-item-section input::placeholder {
+  color: #999;
+  font-weight: 500;
 }
 
 .add-item-section button {
-  padding: 8px 16px;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   color: white;
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  border-radius: 8px;
+  font-size: 15px;
   font-weight: 600;
-  background-color: #10b981;
-}
-
-.add-item-section button:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-}
-
-/* Stock Summary */
-.stock-summary {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #f3f4f6;
-  border-radius: 8px;
-}
-
-.stock-card {
-  flex: 1;
-}
-
-.stock-card p:first-child {
-  margin: 0;
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.stock-card p:last-child {
-  margin: 0;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.in-stock-number {
-  color: #10b981;
-}
-
-.out-stock-number {
-  color: #ef4444;
-}
-
-.stock-checkbox {
-  flex: 2;
-}
-
-.stock-checkbox label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Warning Banner */
-.warning-banner {
-  background-color: #fef3c7;
-  border: 1px solid #f59e0b;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 15px;
-}
-
-/* Popup */
-.popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.popup-box {
-  background-color: white;
-  padding: 30px;
-  border-radius: 8px;
-  max-width: 400px;
-  text-align: center;
-}
-
-.popup-box h3 {
-  margin-bottom: 10px;
-}
-
-.popup-box button {
-  padding: 8px 20px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 4px;
   cursor: pointer;
-  margin-top: 15px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  white-space: nowrap;
 }
 
-/* ==================== TABLE - FIXED ALIGNMENT ==================== */
+.add-item-section button:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.add-item-section button:active {
+  transform: translateY(0);
+}
+
+/* Table Styling - COMPREHENSIVE FIX */
 .sports-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  overflow: hidden;
-  font-family: 'Courier New', Courier, monospace;
-  table-layout: fixed;
+  margin-top: 20px;
+  table-layout: auto;
 }
 
-.sports-table thead tr {
-  background-color: #f3f4f6;
-}
-
-.sports-table th,
-.sports-table td {
-  border-bottom: 1px solid #e5e7eb;
-  vertical-align: middle;
+/* Header cells - strong centering */
+.sports-table thead th {
+  border: 1px solid #ddd !important;
+  padding: 12px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  background: #f4f4f4 !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
 }
 
 .sports-table th {
-  font-weight: 600;
-  color: #000;
-  border-bottom: 2px solid #e5e7eb !important;
-}
-
-.sports-table tbody tr.out-of-stock {
-  background-color: #fee2e2;
-  opacity: 0.7;
-}
-
-/* ==================== CRITICAL: COLUMN ALIGNMENT ==================== */
-
-/* ALL columns: Same left padding for PERFECT vertical alignment */
-.sports-table th,
-.sports-table td {
+  border: 1px solid #ddd !important;
   padding: 12px !important;
-  padding-left: 16px !important;
-  text-align: left !important;
+  text-align: center !important;
   vertical-align: middle !important;
+  background: #f4f4f4;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
 }
 
-/* Column 1: S.N - CENTER (exception) */
-.sports-table th:nth-child(1),
-.sports-table td:nth-child(1) {
-  width: 60px;
+/* Data cells - strong centering */
+.sports-table tbody td {
+  border: 1px solid #ddd !important;
+  padding: 12px !important;
   text-align: center !important;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
+  vertical-align: middle !important;
+  font-size: 14px;
 }
 
-/* Column 2: Item Name - LEFT */
-.sports-table th:nth-child(2),
-.sports-table td:nth-child(2) {
-  width: 25%;
-  padding-left: 16px !important;
-}
-
-/* Column 3: Price - LEFT (SAME padding as Item Name) */
-.sports-table th:nth-child(3),
-.sports-table td:nth-child(3) {
-  width: 15%;
-  padding-left: 16px !important;
-}
-
-/* Column 4: Stock - LEFT (SAME padding) */
-.sports-table th:nth-child(4),
-.sports-table td:nth-child(4) {
-  width: 10%;
-  padding-left: 16px !important;
-}
-
-/* Column 5: Description - LEFT (SAME padding) */
-.sports-table th:nth-child(5),
-.sports-table td:nth-child(5) {
-  width: 20%;
-  padding-left: 16px !important;
-}
-
-/* Column 6: Actions - CENTER (exception) */
-.sports-table th:nth-child(6),
-.sports-table td:nth-child(6) {
-  width: 220px;
+.sports-table td {
+  border: 1px solid #ddd !important;
+  padding: 12px !important;
   text-align: center !important;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
+  vertical-align: middle !important;
+  font-size: 14px;
 }
 
-/* Empty state */
-.empty-state {
-  padding: 20px !important;
-  text-align: center !important;
-  color: #6b7280;
+/* Hover effect for rows */
+.sports-table tbody tr:hover {
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease;
 }
 
-/* Out of stock badge */
-.out-stock-badge {
-  margin-left: 8px;
-  padding: 2px 8px;
-  background-color: #ef4444;
+/* Delete button styling */
+.delete-btn,
+.sports-table .delete-btn,
+.sports-table td .delete-btn {
+  background: #dc3545;
   color: white;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: bold;
-  white-space: nowrap;
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  display: inline-block;
+  margin: 0 auto;
 }
 
-/* Stock input */
-.stock-input {
-  width: 80px;
-  padding: 4px 8px;
-  border: 2px solid #3b82f6;
-  border-radius: 4px;
-  text-align: center;
-  font-family: Arial, sans-serif;
+.delete-btn:hover,
+.sports-table .delete-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
-.stock-input:focus {
-  outline: none;
+/* Restock button if exists */
+.restock-btn,
+.sports-table .restock-btn {
+  background: #007bff;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  display: inline-block;
+  margin: 0 4px;
 }
 
-/* Action buttons */
-.action-buttons {
+.restock-btn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+/* Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
   display: flex;
-  gap: 8px;
   justify-content: center;
   align-items: center;
+  z-index: 9999;
 }
 
-.btn-restock,
-.btn-delete,
-.btn-save,
-.btn-cancel {
-  padding: 6px 12px;
+.popup-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.popup-box h3 {
+  color: #16a34a;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.popup-box button {
+  margin-top: 15px;
+  padding: 8px 20px;
+  background: #16a34a;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
   font-weight: 600;
-  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
-.btn-restock {
-  background-color: #3b82f6;
-}
-
-.btn-restock:hover:not(:disabled) {
-  background-color: #2563eb;
-}
-
-.btn-delete {
-  background-color: #ef4444;
-}
-
-.btn-delete:hover:not(:disabled) {
-  background-color: #dc2626;
-}
-
-.btn-save {
-  background-color: #10b981;
-}
-
-.btn-save:hover:not(:disabled) {
-  background-color: #059669;
-}
-
-.btn-cancel {
-  background-color: #6b7280;
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background-color: #4b5563;
-}
-
-.btn-restock:disabled,
-.btn-delete:disabled,
-.btn-save:disabled,
-.btn-cancel:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+.popup-box button:hover {
+  background: #15803d;
 }
