@@ -38,13 +38,14 @@ INSTALLED_APPS = [
 # --------------------------
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 # --------------------------
@@ -52,6 +53,13 @@ MIDDLEWARE = [
 # --------------------------
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
 CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=False, cast=bool)
+
+# If you want to specify allowed origins instead of allowing all:
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://localhost:5173",
+#     "https://your-frontend-domain.com",
+# ]
 
 # --------------------------
 # REST FRAMEWORK
@@ -63,14 +71,14 @@ REST_FRAMEWORK = {
 }
 
 # --------------------------
-# TEMPLATES
+# TEMPLATES (API-only, no frontend serving)
 # --------------------------
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR.parent / "frontend" / "build"],
+        'DIRS': [],  # No frontend templates - API only
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -121,10 +129,9 @@ USE_I18N = True
 USE_TZ = True
 
 # --------------------------
-# STATIC FILES
+# STATIC FILES (for Django admin only)
 # --------------------------
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR.parent / "frontend" / "build" / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
