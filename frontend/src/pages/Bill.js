@@ -238,7 +238,6 @@ export default function Bill() {
               <input
                 value={buyerName}
                 onChange={(e) => setBuyerName(e.target.value)}
-                placeholder="Customer name"
                 className="info-input"
               />
             </div>
@@ -247,7 +246,6 @@ export default function Bill() {
               <input
                 value={buyerAddress}
                 onChange={(e) => setBuyerAddress(e.target.value)}
-                placeholder="Customer address"
                 className="info-input"
               />
             </div>

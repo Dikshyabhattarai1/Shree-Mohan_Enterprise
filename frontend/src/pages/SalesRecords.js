@@ -1,344 +1,553 @@
-import React, { useContext, useState } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts";
 import { AppContext } from "./AppContext";
-import "./SportsItems.css";
+import "./SalesRecords.css";
 
-function SportsItems() {
-  const { products, fetchProducts, fetchWithAuth } = useContext(AppContext);
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemStock, setNewItemStock] = useState("");
-  const [newItemPrice, setNewItemPrice] = useState("");
-  const [newItemDescription, setNewItemDescription] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showOutOfStock, setShowOutOfStock] = useState(false);
-  const [popup, setPopup] = useState({
-    show: false,
-    message: "",
-  });
-  
-  const [editingId, setEditingId] = useState(null);
-  const [editStock, setEditStock] = useState("");
+function SalesRecords() {
+  const { fetchWithAuth } = useContext(AppContext);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState("monthly");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showCustomRange, setShowCustomRange] = useState(false);
 
-  const sortedProducts = [...products].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  // date range states (custom range)
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
-  const inStockProducts = sortedProducts.filter(p => p.stock > 0);
-  const outOfStockProducts = sortedProducts.filter(p => p.stock === 0);
-  const displayProducts = showOutOfStock ? sortedProducts : inStockProducts;
+  const itemsPerPage = 10;
 
-  const addItem = async () => {
-    if (!newItemName || newItemStock === "" || newItemPrice === "") {
-      alert("Please fill in name, stock, and price");
+  /* ------------------------------------
+     Helper: Calculate date ranges
+  ------------------------------------ */
+  const getDateRange = (type) => {
+    const today = new Date();
+    let startDate, endDate;
+
+    if (type === "daily") {
+      // Today only - same date for start and end
+      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === "weekly") {
+      // Last 7 days (6 days before + today)
+      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+      endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === "monthly") {
+      // Last 30 days (29 days before + today)
+      startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
+      endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    }
+
+    return { startDate, endDate };
+  };
+
+  const formatDateForAPI = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  /* ------------------------------------
+     Fetch Orders with date filtering
+  ------------------------------------ */
+  const fetchOrders = async (type = null) => {
+    try {
+      setLoading(true);
+      let url = "/api/orders/";
+
+      if (type && (type === "daily" || type === "weekly" || type === "monthly")) {
+        const { startDate, endDate } = getDateRange(type);
+        const startStr = formatDateForAPI(startDate);
+        const endStr = formatDateForAPI(endDate);
+        url = `/api/orders/?start=${encodeURIComponent(startStr)}&end=${encodeURIComponent(endStr)}`;
+      }
+
+      const response = await fetchWithAuth(url);
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(Array.isArray(data) ? data : data.records || []);
+      } else {
+        console.error("Failed to fetch orders");
+      }
+    } catch (e) {
+      console.error("Error fetching orders:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ------------------------------------
+     Initial load with monthly filter
+  ------------------------------------ */
+  useEffect(() => {
+    fetchOrders("monthly");
+    // eslint-disable-next-line
+  }, []);
+
+  /* ------------------------------------
+     Handle filter type change
+  ------------------------------------ */
+  const handleFilterChange = (type) => {
+    setFilterType(type);
+    setShowCustomRange(false);
+    setCurrentPage(1);
+    setStartDate("");
+    setEndDate("");
+    fetchOrders(type);
+  };
+
+  /* ------------------------------------
+     Apply custom date range filter
+  ------------------------------------ */
+  const applyDateFilter = async () => {
+    if (!startDate || !endDate) {
+      alert("Please select both start and end dates");
       return;
     }
 
-    const nameRegex = /^[a-zA-Z\s]+$/;
-    if (!nameRegex.test(newItemName)) {
-      alert("Item name should only contain letters and spaces");
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (start > end) {
+      alert("Start date cannot be after end date");
       return;
     }
 
-    if (Number(newItemStock) < 0) {
-      alert("Stock cannot be negative");
-      return;
-    }
-    if (Number(newItemPrice) < 0) {
-      alert("Price cannot be negative");
-      return;
-    }
+    try {
+      setLoading(true);
 
-    setLoading(true);
+      const url = `/api/orders/?start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`;
+
+      const response = await fetchWithAuth(url);
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(Array.isArray(data) ? data : data.records || []);
+        setCurrentPage(1);
+        setShowCustomRange(true);
+        setFilterType("custom");
+      } else {
+        console.error("Failed to fetch filtered orders");
+      }
+    } catch (e) {
+      console.error("Error applying date filter:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ------------------------------------
+     Clear date filter and reset to monthly
+  ------------------------------------ */
+  const clearDateFilter = async () => {
+    setStartDate("");
+    setEndDate("");
+    setShowCustomRange(false);
+    setFilterType("monthly");
+    setCurrentPage(1);
+    await fetchOrders("monthly");
+  };
+
+  /* ------------------------------------
+     Flatten Records with client-side date filtering
+  ------------------------------------ */
+  const salesRecords = useMemo(() => {
+    const records = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    try {
-      const payload = {
-        name: newItemName,
-        stock: Number(newItemStock),
-        price: Number(newItemPrice),
-        description: newItemDescription || "",
-        image: ""
-      };
+    orders.forEach((order) => {
+      if (!order.date) return;
       
-      const response = await fetchWithAuth('/api/products/', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        setNewItemName("");
-        setNewItemStock("");
-        setNewItemPrice("");
-        setNewItemDescription("");
-        await fetchProducts();
-        setPopup({
-          show: true,
-          message: " वस्तु सफलतापूर्वक थपियो",
+      const orderDate = new Date(order.date);
+      orderDate.setHours(0, 0, 0, 0);
+      let shouldInclude = true;
+      
+      // Client-side date filtering for extra safety
+      if (filterType === "daily") {
+        const todayStr = formatDateForAPI(today);
+        const orderDateStr = order.date.split('T')[0];
+        shouldInclude = (orderDateStr === todayStr);
+      } else if (filterType === "weekly") {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 6);
+        weekAgo.setHours(0, 0, 0, 0);
+        shouldInclude = (orderDate >= weekAgo && orderDate <= today);
+      } else if (filterType === "monthly") {
+        const monthAgo = new Date(today);
+        monthAgo.setDate(today.getDate() - 29);
+        monthAgo.setHours(0, 0, 0, 0);
+        shouldInclude = (orderDate >= monthAgo && orderDate <= today);
+      } else if (filterType === "custom" && startDate && endDate) {
+        const customStart = new Date(startDate);
+        customStart.setHours(0, 0, 0, 0);
+        const customEnd = new Date(endDate);
+        customEnd.setHours(23, 59, 59, 999);
+        shouldInclude = (orderDate >= customStart && orderDate <= customEnd);
+      }
+      
+      if (!shouldInclude) return;
+      
+      const items = order.items || order.order_items || [];
+      items.forEach((item) => {
+        records.push({
+          orderId: order.order_id || order.id || order.pk,
+          date: order.date,
+          customer: order.customer || order.customer_name || order.buyer,
+          product: item.product_name || item.particulars || item.name,
+          quantity: Number(item.quantity || item.qty || 0),
+          price: Number(item.rate || item.price || 0),
+          total: Number(item.quantity || item.qty || 0) * Number(item.rate || item.price || 0)
         });
+      });
+    });
+    return records;
+  }, [orders, filterType, startDate, endDate]);
+
+  /* ------------------------------------
+     Aggregation for chart
+  ------------------------------------ */
+  const aggregatedData = useMemo(() => {
+    const grouped = {};
+    const source = salesRecords;
+
+    source.forEach((record) => {
+      if (!record.date) return;
+      const date = new Date(record.date);
+      let key;
+
+      if (filterType === "daily") {
+        key = date.toISOString().slice(0, 10);
+      } else if (filterType === "weekly") {
+        key = date.toISOString().slice(0, 10);
       } else {
-        const err = await response.json();
-        alert("Error adding item: " + JSON.stringify(err));
+        key = date.toISOString().slice(0, 10);
       }
-    } catch (error) {
-      console.error("Error adding item:", error);
-      alert("Failed to add item: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const updateStock = async (id) => {
-    if (editStock === "" || Number(editStock) < 0) {
-      alert("Please enter a valid stock quantity");
-      return;
-    }
+      if (!grouped[key]) grouped[key] = { period: key, total: 0 };
+      grouped[key].total += Number(record.total) || 0;
+    });
 
-    setLoading(true);
+    return Object.values(grouped).sort((a, b) => new Date(a.period) - new Date(b.period));
+  }, [salesRecords, filterType]);
+
+  /* ------------------------------------
+     Metrics
+  ------------------------------------ */
+  const metrics = useMemo(() => {
+    const totalSales = salesRecords.reduce((sum, r) => sum + (Number(r.total) || 0), 0);
+    const uniqueOrders = new Set(salesRecords.map((r) => r.orderId));
+    const totalOrders = uniqueOrders.size;
+    const avgOrder = totalOrders > 0 ? (totalSales / totalOrders).toFixed(2) : "0.00";
+    const totalQuantity = salesRecords.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0);
+
+    return { totalSales, totalOrders, avgOrder, totalQuantity };
+  }, [salesRecords]);
+
+  /* ------------------------------------
+     Pagination
+  ------------------------------------ */
+  const sortedRecords = useMemo(() => {
+    return [...salesRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [salesRecords]);
+
+  const paginatedRecords = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return sortedRecords.slice(start, start + itemsPerPage);
+  }, [currentPage, sortedRecords]);
+
+  const totalPages = Math.max(1, Math.ceil(salesRecords.length / itemsPerPage));
+
+  /* ------------------------------------
+     Delete Order
+  ------------------------------------ */
+  const deleteOrder = async (orderId) => {
+    if (!window.confirm("Delete this entire order?")) return;
+
     try {
-      const product = products.find(p => p.id === id);
-      const payload = {
-        ...product,
-        stock: Number(editStock)
-      };
-
-      const response = await fetchWithAuth(`/api/products/${id}/`, {
-        method: 'PUT',
-        body: JSON.stringify(payload)
+      const response = await fetchWithAuth(`/api/orders/${orderId}/`, {
+        method: "DELETE"
       });
 
       if (response.ok) {
-        await fetchProducts();
-        setEditingId(null);
-        setEditStock("");
-        setPopup({
-          show: true,
-          message: " स्टक अपडेट भयो ",
-        });
+        if (filterType === "custom") {
+          await applyDateFilter();
+        } else {
+          await fetchOrders(filterType);
+        }
       } else {
-        const err = await response.json();
-        alert("Error updating stock: " + JSON.stringify(err));
+        alert("Failed to delete order");
       }
-    } catch (error) {
-      console.error("Error updating stock:", error);
-      alert("Failed to update stock: " + error.message);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      console.error("Error deleting order:", e);
+      alert("Error deleting order");
     }
   };
 
-  const deleteItem = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) {
-      return;
+  /* ------------------------------------
+     Get filter display text
+  ------------------------------------ */
+  const getFilterDisplayText = () => {
+    if (filterType === "daily") {
+      return "Today's Sales";
+    } else if (filterType === "weekly") {
+      return "Last 7 Days";
+    } else if (filterType === "monthly") {
+      return "Last 30 Days";
+    } else if (filterType === "custom" && startDate && endDate) {
+      return `${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`;
     }
-
-    setLoading(true);
-    try {
-      const response = await fetchWithAuth(`/api/products/${id}/`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        await fetchProducts();
-        alert("Item deleted successfully!");
-      } else {
-        alert("Error deleting item");
-      }
-    } catch (error) {
-      console.error("Error deleting:", error);
-      alert("Failed to delete item");
-    } finally {
-      setLoading(false);
-    }
+    return "";
   };
 
-  const startEditing = (id, currentStock) => {
-    setEditingId(id);
-    setEditStock(currentStock.toString());
+  /* ------------------------------------
+     Date select options
+  ------------------------------------ */
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
   };
 
-  const cancelEditing = () => {
-    setEditingId(null);
-    setEditStock("");
-  };
+  const isDateFilterActive = startDate && endDate;
+
+  if (loading) {
+    return (
+      <div className="sales-container">
+        <p>Loading sales records...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="sports-container">
-      <h2 className="sports-title">Sports Items List</h2>
-      
-      {popup.show && (
-        <div className="popup-overlay">
-          <div className="popup-box">
-            <h3>Notification</h3>
-            <p>{popup.message}</p>
-            <button onClick={() => setPopup({ show: false, message: "" })}>
-              OK
+    <div className="sales-container">
+      <h2 className="sales-title">Sales Records Dashboard</h2>
+
+      <button className="sales-btn" onClick={() => handleFilterChange("monthly")}>
+        🔄 Refresh Data
+      </button>
+
+      {/* FILTERS */}
+      <div className="filter-section">
+        <h3>Filter By:</h3>
+
+        <div className="filter-buttons">
+          {["daily", "weekly", "monthly"].map((type) => (
+            <button
+              key={type}
+              className={`filter-btn ${filterType === type ? "active" : ""}`}
+              onClick={() => handleFilterChange(type)}
+            >
+              {type === "daily" ? "TODAY" : type === "weekly" ? "LAST 7 DAYS" : "LAST 30 DAYS"}
             </button>
+          ))}
+
+          <button
+            className={`filter-btn ${showCustomRange ? "active" : ""}`}
+            onClick={() => {
+              setShowCustomRange((v) => !v);
+              if (!showCustomRange) {
+                setFilterType("custom");
+              }
+            }}
+          >
+            CUSTOM RANGE
+          </button>
+        </div>
+
+        {showCustomRange && (
+          <div className="custom-range-box">
+            <h4>📅 Select Date Range</h4>
+
+            <div className="custom-range-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="date-input-group">
+                <label htmlFor="start-date" style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                  Start Date (YYYY-MM-DD)
+                </label>
+                <input
+                  id="start-date"
+                  type="date"
+                  className="sales-input date-input"
+                  value={startDate}
+                  max={getTodayDate()}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  placeholder="YYYY-MM-DD"
+                  style={{ width: '100%', padding: '10px', fontSize: '14px' }}
+                />
+              </div>
+
+              <div className="date-input-group">
+                <label htmlFor="end-date" style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                  End Date (YYYY-MM-DD)
+                </label>
+                <input
+                  id="end-date"
+                  type="date"
+                  className="sales-input date-input"
+                  value={endDate}
+                  max={getTodayDate()}
+                  min={startDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  placeholder="YYYY-MM-DD"
+                  style={{ width: '100%', padding: '10px', fontSize: '14px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: '15px', padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', fontSize: '13px', color: '#0369a1' }}>
+              💡 <strong>Tip:</strong> Click on the calendar icon to select a date, or type manually in YYYY-MM-DD format (e.g., 2025-11-01)
+            </div>
+
+            <div className="custom-range-actions">
+              <button
+                className="sales-btn"
+                onClick={applyDateFilter}
+                disabled={!isDateFilterActive}
+              >
+                Apply Filter
+              </button>
+
+              <button
+                className="clear-btn"
+                onClick={clearDateFilter}
+              >
+                Clear Filter
+              </button>
+            </div>
+
+            {isDateFilterActive && (
+              <div className="date-range-info">
+                📊 Selected range: {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="add-item-section">
-        <input
-          type="text"
-          placeholder="Item name"
-          value={newItemName}
-          onChange={(e) => setNewItemName(e.target.value)}
-          disabled={loading}
-          pattern="[a-zA-Z\s]+"
-        />
-        <input
-          type="number"
-          placeholder="Stock"
-          value={newItemStock}
-          min="0"
-          onChange={(e) => {
-            if (Number(e.target.value) < 0) return;
-            setNewItemStock(e.target.value);
-          }}
-          disabled={loading}
-        />
-        <input
-          type="number"
-          placeholder="Price"
-          value={newItemPrice}
-          min="0"
-          onChange={(e) => {
-            if (Number(e.target.value) < 0) return;
-            setNewItemPrice(e.target.value);
-          }}
-          disabled={loading}
-        />
-        <input
-          type="text"
-          placeholder="Description (optional)"
-          value={newItemDescription}
-          onChange={(e) => setNewItemDescription(e.target.value)}
-          disabled={loading}
-        />
-        <button onClick={addItem} disabled={loading}>
-          {loading ? "Adding..." : "Add Item"}
-        </button>
+        {filterType && (
+          <div className="date-range-info">
+            📊 Showing: {getFilterDisplayText()}
+          </div>
+        )}
       </div>
 
-      <div className="stock-summary">
-        <div className="stock-card">
-          <p>In Stock</p>
-          <p className="in-stock-number">{inStockProducts.length}</p>
+      {salesRecords.length === 0 ? (
+        <div className="empty-state">
+          <p>No sales records found for the selected period.</p>
         </div>
-        <div className="stock-card">
-          <p>Out of Stock</p>
-          <p className="out-stock-number">{outOfStockProducts.length}</p>
-        </div>
-        <div className="stock-checkbox">
-          <label>
-            <input
-              type="checkbox"
-              checked={showOutOfStock}
-              onChange={(e) => setShowOutOfStock(e.target.checked)}
-            />
-            <span>Show out of stock items</span>
-          </label>
-        </div>
-      </div>
+      ) : (
+        <>
+          {/* METRICS */}
+          <div className="metrics-section">
+            <div className="metric-card">
+              <p className="metric-label">Total Sales</p>
+              <p className="metric-value">Rs.{metrics.totalSales.toFixed(2)}</p>
+            </div>
 
-      {!showOutOfStock && outOfStockProducts.length > 0 && (
-        <div className="warning-banner">
-          ℹ️ {outOfStockProducts.length} out of stock items hidden.
-        </div>
-      )}
+            <div className="metric-card">
+              <p className="metric-label">Total Orders</p>
+              <p className="metric-value">{metrics.totalOrders}</p>
+            </div>
 
-      <table className="sports-table">
-        <thead>
-          <tr>
-            <th>S.N</th>
-            <th>Item Name</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Description</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {displayProducts.length === 0 ? (
-            <tr>
-              <td colSpan="6" className="empty-state">
-                {showOutOfStock
-                  ? "No products found."
-                  : "No products in stock. Enable 'Show out of stock items'."}
-              </td>
-            </tr>
-          ) : (
-            displayProducts.map((item, index) => (
-              <tr key={item.id} className={item.stock === 0 ? 'out-of-stock' : ''}>
-                <td>{index + 1}</td>
-                <td>
-                  {item.name}
-                  {item.stock === 0 && (
-                    <span className="out-stock-badge">OUT OF STOCK</span>
-                  )}
-                </td>
-                <td>Rs. {item.price}</td>
-                <td>
-                  {editingId === item.id ? (
-                    <input
-                      type="number"
-                      value={editStock}
-                      min="0"
-                      onChange={(e) => {
-                        if (Number(e.target.value) < 0) return;
-                        setEditStock(e.target.value);
-                      }}
-                      className="stock-input"
-                    />
-                  ) : (
-                    item.stock
-                  )}
-                </td>
-                <td>{item.description || "-"}</td>
-                <td>
-                  <div className="action-buttons">
-                    {editingId === item.id ? (
-                      <>
-                        <button
-                          onClick={() => updateStock(item.id)}
-                          disabled={loading}
-                          className="btn-save"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={cancelEditing}
-                          disabled={loading}
-                          className="btn-cancel"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => startEditing(item.id, item.stock)}
-                          disabled={loading}
-                          className="btn-restock"
-                        >
-                          Restock
-                        </button>
-                        <button
-                          onClick={() => deleteItem(item.id)}
-                          disabled={loading}
-                          className="btn-delete"
-                        >
+            <div className="metric-card">
+              <p className="metric-label">Average Order</p>
+              <p className="metric-value">Rs.{metrics.avgOrder}</p>
+            </div>
+
+            <div className="metric-card">
+              <p className="metric-label">Total Quantity</p>
+              <p className="metric-value">{metrics.totalQuantity}</p>
+            </div>
+          </div>
+
+          {/* CHART */}
+          <div className="chart-section">
+            <h3>Sales Trend</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={aggregatedData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="period" />
+                <YAxis />
+                <Tooltip formatter={(value) => `Rs.${Number(value).toFixed(2)}`} />
+                <Legend />
+                <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} name="Sales Total" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* TABLE */}
+          <div className="table-section">
+            <h3>Detailed Records</h3>
+
+            <div className="table-wrapper">
+              <table className="sales-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {paginatedRecords.map((record, index) => (
+                    <tr key={index}>
+                      <td>{record.orderId}</td>
+                      <td>{record.date ? new Date(record.date).toLocaleDateString() : "-"}</td>
+                      <td>{record.customer}</td>
+                      <td><strong>{record.product}</strong></td>
+                      <td>{record.quantity}</td>
+                      <td>Rs.{record.price}</td>
+                      <td><strong>Rs.{record.total}</strong></td>
+                      <td>
+                        <button className="delete-btn" onClick={() => deleteOrder(record.orderId)}>
                           Delete
                         </button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* PAGINATION */}
+            <div className="pagination-section">
+              <button
+                className="pagination-btn"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                ← Previous
+              </button>
+                <span className="pagination-info">
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, salesRecords.length)} - {Math.min(currentPage * itemsPerPage, salesRecords.length)} of {salesRecords.length} records
+              </span>
+
+              <button
+                className="pagination-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+            
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-export default SportsItems;
+export default SalesRecords;
