@@ -78,9 +78,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             date_np=data.get('date_np', '')
         )
 
-        # 2️⃣ Create OrderItems & related ExportRecords & CombinedRecords
+        # 2️⃣ Create OrderItems & CombinedRecords
         items = data.get('items', [])
-
         for item in items:
             product = Product.objects.get(id=item.get('product'))
 
@@ -94,8 +93,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             product.stock -= order_item.quantity
             product.save(update_fields=['stock'])
 
-           
-            # CombinedRecord
             CombinedRecord.objects.create(
                 order_id=order.order_id,
                 customer=order.customer,
@@ -105,13 +102,10 @@ class OrderViewSet(viewsets.ModelViewSet):
                 quantity=order_item.quantity,
                 rate=order_item.rate,
                 total=order_item.amount,
-               
             )
 
         serializer = self.get_serializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
 
 
 # ========================
