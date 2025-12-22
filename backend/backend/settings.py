@@ -1,14 +1,9 @@
-"""
-Django settings for backend project (refactored for .env usage).
-"""
-
 from pathlib import Path
 from datetime import timedelta
 from decouple import config, Csv
+import dj_database_url
+import os
 
-# --------------------------
-# BASE DIRECTORY
-# --------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --------------------------
@@ -16,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
 
 # --------------------------
 # INSTALLED APPS
@@ -44,15 +39,11 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
-
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
@@ -72,16 +63,14 @@ REST_FRAMEWORK = {
 }
 
 # --------------------------
-# TEMPLATES (React build files)
+# TEMPLATES
 # --------------------------
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            BASE_DIR.parent / "frontend" / "build"
-        ],
+        'DIRS': [BASE_DIR.parent / "frontend" / "build"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -97,7 +86,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 # --------------------------
-# DATABASE
+# DATABASE (Aiven PostgreSQL)
 # --------------------------
 DATABASES = {
     'default': {
@@ -105,8 +94,11 @@ DATABASES = {
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default=5432, cast=int),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT', cast=int),
+        'OPTIONS': {
+            'sslmode': 'require',
+        }
     }
 }
 
@@ -129,16 +121,12 @@ USE_I18N = True
 USE_TZ = True
 
 # --------------------------
-# STATIC FILES (React + Django)
+# STATIC FILES
 # --------------------------
 STATIC_URL = '/static/'
-
-STATICFILES_DIRS = [
-    BASE_DIR.parent / "frontend" / "build" / "static",
-]
-
+STATICFILES_DIRS = [BASE_DIR.parent / "frontend" / "build" / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-#STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --------------------------
 # MEDIA FILES
@@ -159,3 +147,14 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=config('REFRESH_TOKEN_LIFETIME_DAYS', default=7, cast=int)),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# --------------------------
+# SSL/SECURITY (Production)
+# --------------------------
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
