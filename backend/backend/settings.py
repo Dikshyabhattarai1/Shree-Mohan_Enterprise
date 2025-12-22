@@ -52,14 +52,15 @@ MIDDLEWARE = [
 # CORS
 # --------------------------
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
-CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=False, cast=bool)
+CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=True, cast=bool)
 
-# If you want to specify allowed origins instead of allowing all:
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://localhost:5173",
-#     "https://your-frontend-domain.com",
-# ]
+# Specify allowed origins for production (more secure)
+if not CORS_ALLOW_ALL_ORIGINS:
+    CORS_ALLOWED_ORIGINS = config(
+        'CORS_ALLOWED_ORIGINS',
+        default='http://localhost:3000,http://localhost:5173',
+        cast=Csv()
+    )
 
 # --------------------------
 # REST FRAMEWORK
