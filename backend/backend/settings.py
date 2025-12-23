@@ -58,7 +58,7 @@ CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=True, cast=boo
 if not CORS_ALLOW_ALL_ORIGINS:
     CORS_ALLOWED_ORIGINS = config(
         'CORS_ALLOWED_ORIGINS',
-        default='http://localhost:3000,http://localhost:5173',
+          "https://shree-mohan-enterprise-kgsq.vercel.app","https://shree-mohan-enterprise-kgsq-5pfww9cw8.vercel.app",
         cast=Csv()
     )
 

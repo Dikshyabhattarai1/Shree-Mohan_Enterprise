@@ -11,7 +11,9 @@ export function AppProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
-  const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
+const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
+console.log("Backend URL:", BACKEND_URL);
+
 
   // -------------------------------
   // INITIAL LOAD
