@@ -11,7 +11,7 @@ export function AppProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
-const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
+  const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
 
   // -------------------------------
   // INITIAL LOAD
@@ -58,9 +58,17 @@ const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json(); // parse JSON safely
+      } catch (err) {
+        console.error("Failed to parse JSON:", err);
+        return { success: false, error: "Invalid response from server" };
+      }
 
-      if (!res.ok) return { success: false, error: data.error || "Login failed" };
+      if (!res.ok) {
+        return { success: false, error: data.error || `Login failed: ${res.status}` };
+      }
 
       localStorage.setItem("access_token", data.access);
       localStorage.setItem("refresh_token", data.refresh);
